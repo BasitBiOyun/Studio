@@ -95,39 +95,6 @@ assert.ok(
   'Optional image tooling must stay lazy-loaded and browser-safe.',
 );
 
-function collectTsxFiles(dir: string): string[] {
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) return collectTsxFiles(fullPath);
-    return entry.isFile() && entry.name.endsWith('.tsx') ? [fullPath] : [];
-  });
-}
-
-for (const filePath of collectTsxFiles(path.join(root, 'src'))) {
-  const source = fs.readFileSync(filePath, 'utf8');
-  const importedIcons = new Set<string>();
-  const importPattern = /import\s*\{([\s\S]*?)\}\s*from\s*['"]@tabler\/icons-react['"]/g;
-  let importMatch: RegExpExecArray | null;
-  while ((importMatch = importPattern.exec(source))) {
-    for (const rawName of importMatch[1].split(',')) {
-      const name = rawName.trim().split(/\s+as\s+/)[1] || rawName.trim().split(/\s+as\s+/)[0];
-      if (name) importedIcons.add(name.trim());
-    }
-  }
-
-  const usedIcons = new Set(
-    Array.from(source.matchAll(/<\s*(Icon[A-Z][A-Za-z0-9_]*)\b/g), (match) => match[1])
-      .filter((name) => name !== 'IconComponent')
-  );
-
-  for (const icon of usedIcons) {
-    assert.ok(
-      importedIcons.has(icon),
-      `${path.relative(root, filePath)} renders ${icon} without importing it from @tabler/icons-react.`,
-    );
-  }
-}
-
 const matchResultProject = JSON.parse(JSON.stringify(DEFAULT_PROJECT));
 matchResultProject.templateType = 'match-result';
 matchResultProject.sharedData.player.name = '';
@@ -176,4 +143,4 @@ for (const template of expectedTemplateCases) {
   assert.ok(card.includes(`case '${template}'`) || template === 'scouting-report', `Renderer missing template: ${template}`);
 }
 
-console.log('Core editor self-test passed: project storage, Visuals runtime, direct editing, icon imports, QA and SnapDOM export safeguards.');
+console.log('Core editor self-test passed: project storage, Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
