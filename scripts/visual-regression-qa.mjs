@@ -43,23 +43,15 @@ async function assertShell(page, viewport) {
   }));
 
   const overflow = Math.max(metrics.documentWidth, metrics.bodyWidth) - metrics.innerWidth;
-  if (overflow > 2) {
-    throw new Error(`${viewport.name}: horizontal overflow detected (${overflow}px)`);
-  }
-  if (metrics.artboards !== 1) {
-    throw new Error(`${viewport.name}: expected exactly one visible editor artboard, got ${metrics.artboards}`);
-  }
+  if (overflow > 2) throw new Error(`${viewport.name}: horizontal overflow detected (${overflow}px)`);
+  if (metrics.artboards !== 1) throw new Error(`${viewport.name}: expected exactly one visible editor artboard, got ${metrics.artboards}`);
 
   if (viewport.width < 1024) {
     const menu = page.getByRole('button', { name: 'Open editor controls' });
-    if (!(await menu.isVisible())) {
-      throw new Error(`${viewport.name}: mobile/tablet editor menu is not visible`);
-    }
+    if (!(await menu.isVisible())) throw new Error(`${viewport.name}: mobile/tablet editor menu is not visible`);
   } else {
     const sidebarTemplates = page.getByRole('button', { name: /^Templates$/ });
-    if (!(await sidebarTemplates.isVisible())) {
-      throw new Error(`${viewport.name}: desktop editor sidebar is not visible`);
-    }
+    if (!(await sidebarTemplates.isVisible())) throw new Error(`${viewport.name}: desktop editor sidebar is not visible`);
   }
 }
 
@@ -106,7 +98,7 @@ async function main() {
       for (const template of templates) {
         try {
           await openTemplates(page, viewport);
-          const templateButton = page.getByRole('button', { name: new RegExp(`^${template.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}`) });
+          const templateButton = page.getByRole('button', { name: template, exact: false }).first();
           await templateButton.scrollIntoViewIfNeeded();
           await templateButton.click();
           await closeTemplates(page, viewport);
