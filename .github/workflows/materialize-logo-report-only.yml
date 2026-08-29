@@ -29,3 +29,5 @@ jobs:
           git add scripts/verify-uefa-top-divisions.cjs .github/workflows/sync-club-catalogue.yml
           git commit -m "Make UEFA logo coverage non-blocking" || exit 0
           git push origin HEAD:main
+
+      # One-time materializer; remove after the source commit lands.
