@@ -1,0 +1,43 @@
+name: Sync UEFA Club Catalogue
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sync-uefa-club-catalogue.cjs'
+      - '.github/workflows/sync-club-catalogue.yml'
+  schedule:
+    - cron: '20 4 1 * *'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-clubs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Refresh club catalogue
+        run: node scripts/sync-uefa-club-catalogue.cjs
+
+      - name: Commit refreshed snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/clubs_catalogue.json src/data/clubs_catalogue_meta.json
+          if git diff --cached --quiet; then
+            echo "Catalogue already current."
+            exit 0
+          fi
+          git commit -m "Refresh UEFA club logo catalogue"
+          git push origin HEAD:main
