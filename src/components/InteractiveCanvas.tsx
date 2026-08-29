@@ -10,6 +10,9 @@ interface InteractiveCanvasProps {
 
 type ToolComponent = React.ComponentType<any>;
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   children,
   project,
@@ -24,6 +27,10 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
 
   const activeTemplateKey = project.templateType || 'scouting-report';
   const activeTemplate = project.templates[activeTemplateKey];
+
+  useEffect(() => {
+    setTargets([]);
+  }, [activeTemplateKey]);
 
   useEffect(() => {
     if (!interactive) return;
@@ -63,37 +70,44 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
       target.setAttribute('data-x', newX.toString());
       target.setAttribute('data-y', newY.toString());
       target.style.transform = e.transform;
-    } else {
-      const parent = target.parentElement;
-      if (!parent) return;
-      const pw = parent.offsetWidth || 1;
-      const ph = parent.offsetHeight || 1;
-
-      const dx = (e.delta[0] / pw) * 100;
-      const dy = (e.delta[1] / ph) * 100;
-
-      const currentX = parseFloat(target.getAttribute('data-x') || '0');
-      const currentY = parseFloat(target.getAttribute('data-y') || '0');
-      const newX = currentX + dx;
-      const newY = currentY + dy;
-
-      target.setAttribute('data-x', newX.toFixed(2));
-      target.setAttribute('data-y', newY.toFixed(2));
-
-      const scale = target.getAttribute('data-scale') || '1';
-      target.style.transform = `translate(${newX}%, ${newY}%) scale(${scale})`;
+      return;
     }
+
+    const parent = target.parentElement;
+    if (!parent) return;
+    const pw = parent.offsetWidth || 1;
+    const ph = parent.offsetHeight || 1;
+
+    const dx = (e.delta[0] / pw) * 100;
+    const dy = (e.delta[1] / ph) * 100;
+
+    const currentX = parseFloat(target.getAttribute('data-x') || '0');
+    const currentY = parseFloat(target.getAttribute('data-y') || '0');
+    const newX = clamp(currentX + dx, -150, 150);
+    const newY = clamp(currentY + dy, -150, 150);
+
+    target.setAttribute('data-x', newX.toFixed(2));
+    target.setAttribute('data-y', newY.toFixed(2));
+
+    const scale = target.getAttribute('data-scale') || '1';
+    target.style.transform = `translate(${newX}%, ${newY}%) scale(${scale})`;
   };
 
   const handleScale = (e: any) => {
-    const currentScale = parseFloat(e.target.getAttribute('data-scale') || '1');
-    const newScale = currentScale * e.delta[0];
+    const target = e.target as HTMLElement;
+    const id = target.getAttribute('data-moveable-id') || '';
+    if (id.startsWith('logo-')) return;
 
-    e.target.setAttribute('data-scale', newScale.toFixed(2));
+    const currentScale = parseFloat(target.getAttribute('data-scale') || '1');
+    const deltaScale = Number(e.delta?.[0]);
+    const nextMultiplier = Number.isFinite(deltaScale) && deltaScale > 0 ? deltaScale : 1;
+    const newScale = clamp(currentScale * nextMultiplier, 0.35, 3.5);
 
-    const x = e.target.getAttribute('data-x') || '0';
-    const y = e.target.getAttribute('data-y') || '0';
-    e.target.style.transform = `translate(${x}%, ${y}%) scale(${newScale})`;
+    target.setAttribute('data-scale', newScale.toFixed(2));
+
+    const x = target.getAttribute('data-x') || '0';
+    const y = target.getAttribute('data-y') || '0';
+    target.style.transform = `translate(${x}%, ${y}%) scale(${newScale})`;
   };
 
   const updateProjectFromTarget = (target: HTMLElement) => {
@@ -102,26 +116,26 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
 
     const x = parseFloat(target.getAttribute('data-x') || '0');
     const y = parseFloat(target.getAttribute('data-y') || '0');
-    const scale = parseFloat(target.getAttribute('data-scale') || '1');
+    const scale = clamp(parseFloat(target.getAttribute('data-scale') || '1'), 0.35, 3.5);
 
     const newProject = JSON.parse(JSON.stringify(project)) as Project;
     const template = newProject.templates[activeTemplateKey];
     if (!template) return;
 
     if (id === 'primary-image') {
-      template.visuals.imageTransform.x = x;
-      template.visuals.imageTransform.y = y;
+      template.visuals.imageTransform.x = clamp(x, -150, 150);
+      template.visuals.imageTransform.y = clamp(y, -150, 150);
       template.visuals.imageTransform.scale = scale;
     } else if (id === 'secondary-image' && template.visuals.secondaryImageTransform) {
-      template.visuals.secondaryImageTransform.x = x;
-      template.visuals.secondaryImageTransform.y = y;
+      template.visuals.secondaryImageTransform.x = clamp(x, -150, 150);
+      template.visuals.secondaryImageTransform.y = clamp(y, -150, 150);
       template.visuals.secondaryImageTransform.scale = scale;
     } else if (id.startsWith('logo-')) {
       const idxStr = id.replace('logo-', '');
       const logo = template.visuals.logos.find((l: any, idx: number) => (l.id || idx).toString() === idxStr);
       if (logo) {
-        logo.x = x;
-        logo.y = y;
+        logo.x = Number.isFinite(x) ? x : 0;
+        logo.y = Number.isFinite(y) ? y : 0;
         target.style.transform = '';
       }
     }
@@ -139,7 +153,10 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     updateProjectFromTarget(e.target);
   };
 
-  const toolsReady = interactive && MoveableComponent && SelectoComponent;
+  const toolsReady = Boolean(interactive && MoveableComponent && SelectoComponent);
+  const selectionHasLogo = targets.some((target) =>
+    (target as HTMLElement).getAttribute?.('data-moveable-id')?.startsWith('logo-')
+  );
 
   return (
     <div className="relative w-full h-full flex flex-col">
@@ -155,8 +172,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
               ref={moveableRef}
               target={targets}
               draggable
-              scalable
-              rotatable
+              scalable={!selectionHasLogo}
               keepRatio
               snappable
               snapCenter
