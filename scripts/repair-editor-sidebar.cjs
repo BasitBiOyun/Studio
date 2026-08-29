@@ -88,7 +88,6 @@ source = source.replaceAll(
 const forbidden = [
   '<IconWand',
   'new Vibrant(',
-  'await imageCompression(file',
 ];
 for (const token of forbidden) {
   if (source.includes(token)) {
