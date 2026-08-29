@@ -150,9 +150,11 @@ export default function App() {
     const { clientWidth, clientHeight } = previewAreaRef.current;
     if (clientWidth === 0 || clientHeight === 0) return;
 
-    const padding = window.innerWidth < 768 ? 20 : 60;
-    const availWidth = Math.max(clientWidth - padding, 200);
-    const availHeight = Math.max(clientHeight - padding, 200);
+    const viewportWidth = window.innerWidth;
+    const padding = viewportWidth < 640 ? 12 : viewportWidth < 1024 ? 24 : 60;
+    const bottomReserve = viewportWidth < 1024 ? 64 : 0;
+    const availWidth = Math.max(clientWidth - padding, 160);
+    const availHeight = Math.max(clientHeight - padding - bottomReserve, 160);
 
     const fitScale = Math.min(
       availWidth / activeDimensions.width,
@@ -283,7 +285,7 @@ export default function App() {
   const finalScale = autoFit ? scale : scale * zoomLevel;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-neutral-950 text-neutral-100 overflow-hidden select-none font-body">
+    <div className="flex flex-col h-[100dvh] w-full max-w-full bg-neutral-950 text-neutral-100 overflow-hidden select-none font-body">
       <TopBar
         project={currentProject}
         canUndo={canUndo}
@@ -301,13 +303,15 @@ export default function App() {
         exportStatus={exportStatus}
       />
 
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 min-h-0 flex overflow-hidden relative">
         <div
-          className={`hidden md:flex flex-shrink-0 h-full relative transition-all duration-300 ease-in-out ${
-            isSidebarOpen ? 'w-[420px] lg:w-[460px] opacity-100' : 'w-0 opacity-0 overflow-hidden'
+          className={`hidden lg:flex flex-shrink-0 h-full relative transition-all duration-300 ease-in-out ${
+            isSidebarOpen
+              ? 'lg:w-[400px] xl:w-[440px] 2xl:w-[460px] opacity-100'
+              : 'w-0 opacity-0 overflow-hidden'
           }`}
         >
-          <div className="w-[420px] lg:w-[460px] h-full flex-shrink-0">
+          <div className="lg:w-[400px] xl:w-[440px] 2xl:w-[460px] h-full flex-shrink-0">
             <EditorSidebar
               project={currentProject}
               onChange={handleProjectChange}
@@ -323,10 +327,13 @@ export default function App() {
             setIsSidebarOpen(!isSidebarOpen);
             setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
           }}
-          className={`hidden md:flex absolute top-1/2 -translate-y-1/2 z-40 bg-neutral-800 border border-neutral-700 text-white rounded-full p-1.5 shadow-lg hover:bg-neutral-700 transition-all duration-300 ${
-            isSidebarOpen ? 'left-[405px] lg:left-[445px]' : 'left-4'
+          className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 z-40 bg-neutral-800 border border-neutral-700 text-white rounded-full p-1.5 shadow-lg hover:bg-neutral-700 transition-all duration-300 ${
+            isSidebarOpen
+              ? 'lg:left-[385px] xl:left-[425px] 2xl:left-[445px]'
+              : 'left-4'
           }`}
           title={isSidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar'}
+          aria-label={isSidebarOpen ? 'Collapse editor sidebar' : 'Expand editor sidebar'}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -350,7 +357,7 @@ export default function App() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          className={`flex-1 h-full bg-[#050608] relative overflow-hidden flex items-center justify-center p-2 md:p-6 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`flex-1 min-w-0 h-full bg-[#050608] relative overflow-hidden flex items-center justify-center p-2 sm:p-3 lg:p-6 touch-none ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
         >
           <div
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -362,14 +369,15 @@ export default function App() {
             }}
           />
 
-          <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-neutral-800 shadow-xl text-neutral-300 text-xs">
+          <div className="responsive-bottom absolute right-3 sm:right-4 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-neutral-800 shadow-xl text-neutral-300 text-xs">
             <button
               onClick={() => {
                 setAutoFit(false);
                 setZoomLevel((prev) => Math.max(prev - 0.2, 0.4));
               }}
-              className="p-1.5 hover:text-white hover:bg-neutral-800 rounded-lg"
+              className="p-1.5 hover:text-white hover:bg-neutral-800 rounded-lg min-w-8 min-h-8 flex items-center justify-center"
               title="Zoom Out"
+              aria-label="Zoom out"
             >
               <IconZoomOut size={16} />
             </button>
@@ -381,7 +389,7 @@ export default function App() {
                 setPanOffset({ x: 0, y: 0 });
                 updateScale();
               }}
-              className={`px-2 py-1 rounded-lg text-[11px] font-semibold ${
+              className={`px-2 py-1 rounded-lg text-[11px] font-semibold min-h-8 ${
                 autoFit ? 'bg-cyan-500/20 text-cyan-300' : 'hover:bg-neutral-800 text-neutral-400'
               }`}
               title="Fit to Screen"
@@ -394,20 +402,22 @@ export default function App() {
                 setAutoFit(false);
                 setZoomLevel((prev) => Math.min(prev + 0.2, 2.5));
               }}
-              className="p-1.5 hover:text-white hover:bg-neutral-800 rounded-lg"
+              className="p-1.5 hover:text-white hover:bg-neutral-800 rounded-lg min-w-8 min-h-8 flex items-center justify-center"
               title="Zoom In"
+              aria-label="Zoom in"
             >
               <IconZoomIn size={16} />
             </button>
           </div>
 
-          <div className="md:hidden absolute bottom-4 left-4 z-20">
+          <div className="lg:hidden responsive-bottom absolute left-3 sm:left-4 z-20">
             <button
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-cyan-400 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 min-h-10 rounded-full bg-cyan-400 text-neutral-950 font-bold text-xs shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
+              aria-label="Edit graphic"
             >
               <IconEdit size={16} />
-              <span>Edit Graphic</span>
+              <span className="mobile-edit-label">Edit Graphic</span>
             </button>
           </div>
 
@@ -420,6 +430,7 @@ export default function App() {
               maxWidth: '100%',
               maxHeight: '100%',
               transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+              willChange: 'transform',
             }}
           >
             <div
@@ -475,7 +486,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-neutral-900/95 border border-cyan-500/40 text-cyan-200 text-xs font-semibold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)] px-4 py-2 rounded-xl bg-neutral-900/95 border border-cyan-500/40 text-cyan-200 text-xs font-semibold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150 text-center">
           {toastMessage}
         </div>
       )}
