@@ -12,6 +12,12 @@ import {
   createPlayerAutofillPreview,
   confirmPlayerAutofill,
 } from '../src/services/playerAutofill';
+import {
+  formatComparisonContext,
+  getMetricWinner,
+  MAX_COMPARISON_METRICS,
+  visibleComparisonMetrics,
+} from '../src/services/comparison';
 
 function freshProject() {
   return JSON.parse(JSON.stringify(DEFAULT_PROJECT));
@@ -61,7 +67,17 @@ const studioPacks = [
   },
   {
     schemaVersion: 'studio-pack-v1', templateType: 'player-comparison',
-    data: { playerA: { name: 'A' }, playerB: { name: 'B' }, subtitle: 'Comparison', metrics: [{ label: 'xG /90', val1: 0.4, val2: 0.3 }], verdict: 'A leads.' },
+    context: { season: '2025/26', competition: 'Bundesliga', minimumMinutes: 900, normalization: 'Per 90' },
+    sources: [{ provider: 'Test Source', verified: true }],
+    data: {
+      playerA: { name: 'A', club: 'Club A', positions: 'AM', age: 20 },
+      playerB: { name: 'B', club: 'Club B', positions: 'AM', age: 21 },
+      metrics: [
+        { label: 'xG /90', val1: 0.4, val2: 0.3, higherIsBetter: true },
+        { label: 'Turnovers /90', val1: 2.1, val2: 3.4, higherIsBetter: false },
+      ],
+      verdict: 'A offers more shot threat while also protecting possession better.',
+    },
   },
   {
     schemaVersion: 'studio-pack-v1', templateType: 'transfer-graphic',
@@ -124,6 +140,25 @@ for (let index = 0; index < studioPacks.length; index += 1) {
   assert.equal(applied.templates[expectedTypes[index]].visuals.playerImageSrc, initialImage, 'Studio Pack must preserve player visuals.');
 }
 
+const comparisonResult = parsePlayerPack(JSON.stringify(studioPacks[1]));
+assert.ok(comparisonResult.data, 'Comparison Studio Pack should parse.');
+const comparisonProject = applyPlayerPackToProject(freshProject(), comparisonResult.data!);
+const comparisonData = comparisonProject.templates['player-comparison'].content.comparisonData!;
+assert.equal(comparisonData.player1.name, 'A', 'Player A must come from comparisonData, not shared scouting state.');
+assert.equal(comparisonData.player2.name, 'B');
+assert.equal(getMetricWinner(comparisonData.metrics[0]), 'player1', 'Higher-is-better metrics should prefer the larger value.');
+assert.equal(getMetricWinner(comparisonData.metrics[1]), 'player1', 'Lower-is-better metrics should prefer the smaller value.');
+assert.equal(
+  formatComparisonContext((comparisonProject.templates['player-comparison'].content as any).dataProvenance?.context),
+  '2025/26 • BUNDESLIGA • PER 90 • MIN. 900 MINUTES',
+  'Comparison context should produce a compact standardized line.',
+);
+assert.equal(
+  visibleComparisonMetrics([...comparisonData.metrics, ...comparisonData.metrics, ...comparisonData.metrics]).length,
+  MAX_COMPARISON_METRICS,
+  'Comparison view should never render more than five metrics.',
+);
+
 const providerPack = richPlayerPack as any;
 const provider = new StaticPlayerDataProvider('selftest', 'Self Test Provider', { 'can-uzun': providerPack });
 registerPlayerDataProvider(provider);
@@ -142,4 +177,4 @@ const confirmed = confirmPlayerAutofill(beforeConfirm, preview);
 assert.equal(confirmed.sharedData.player.name, 'Can Uzun', 'Confirmation should apply the normalized pack.');
 unregisterPlayerDataProvider('selftest');
 
-console.log(`Data layer self-test passed: Player Pack + ${studioPacks.length} Studio Pack templates + provider search/fetch/normalize + preview/confirm.`);
+console.log(`Data layer self-test passed: Player Pack + ${studioPacks.length} Studio Pack templates + perfected comparison rules + provider search/fetch/normalize + preview/confirm.`);
