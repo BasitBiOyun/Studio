@@ -43,6 +43,12 @@ import {
   rankingValueFontSize,
   visibleRankingItems,
 } from '../src/services/ranking';
+import {
+  quoteAuthorFontSize,
+  quoteBodyFontSize,
+  quoteHeaderContext,
+  quotePunchlineFontSize,
+} from '../src/services/quoteOpinion';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -257,4 +263,25 @@ assert.notEqual(
   'Long ranking values should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis + Stat Highlight + Ranking Top List content rules.');
+assert.deepEqual(
+  quoteHeaderContext(' Matchday Reaction ', ' Press Conference • 29 Aug 2026 '),
+  { topicTag: 'Matchday Reaction', sourceDate: 'Press Conference • 29 Aug 2026' },
+  'Quote Opinion header context should trim optional labels without inventing content.',
+);
+assert.notEqual(
+  quoteBodyFontSize('Short quote.', false),
+  quoteBodyFontSize('A much longer quote that needs to remain readable across the card without forcing the layout to overflow. '.repeat(4), false),
+  'Long Quote Opinion body text should scale down rather than overflow.',
+);
+assert.notEqual(
+  quoteAuthorFontSize('JOSE MOURINHO', false),
+  quoteAuthorFontSize('A VERY LONG AUTHOR OR SPEAKER DISPLAY NAME', false),
+  'Long author names should scale down rather than overflow.',
+);
+assert.notEqual(
+  quotePunchlineFontSize('Compact takeaway', false),
+  quotePunchlineFontSize('A much longer takeaway that should remain secondary to the main quotation while still being readable on export.', false),
+  'Long key takeaways should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis + Stat Highlight + Ranking Top List + Quote Opinion content rules.');
