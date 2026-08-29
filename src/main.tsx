@@ -2,11 +2,6 @@ import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 
-// Temporary runtime guard for an incomplete crop-editor integration in EditorSidebar.
-// The sidebar currently reads `cropState` during render before declaring its own state.
-// Keeping it null prevents the optional crop modal branch from crashing the entire editor.
-(globalThis as any).cropState = null;
-
 const App = React.lazy(() => import('./App.tsx'));
 
 class AppErrorBoundary extends React.Component<
