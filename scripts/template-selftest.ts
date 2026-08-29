@@ -16,6 +16,14 @@ import {
   visibleMatchForm,
   visibleTacticalKeys,
 } from '../src/services/matchPreview';
+import {
+  matchAnalysisHeaderLabel,
+  matchAnalysisMetricShare,
+  matchAnalysisScoreFontSize,
+  visibleMatchAnalysisScorers,
+  visibleMatchAnalysisStats,
+  visibleMatchAnalysisTakeaways,
+} from '../src/services/matchAnalysis';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -95,4 +103,45 @@ assert.notEqual(
   'Long Match Preview team names should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview content rules.');
+assert.equal(
+  visibleMatchAnalysisStats([
+    { label: 'xG', val1: '1', val2: '2' },
+    { label: 'Shots', val1: '10', val2: '8' },
+    { label: 'Possession', val1: '52', val2: '48' },
+    { label: 'PPDA', val1: '8', val2: '12' },
+    { label: 'Extra', val1: '1', val2: '1' },
+  ]).length,
+  4,
+  'Match Analysis should render at most four key metrics.',
+);
+assert.deepEqual(
+  visibleMatchAnalysisTakeaways([' First ', '', 'Second', 'Third', 'Fourth']),
+  ['First', 'Second', 'Third'],
+  'Match Analysis should keep only three meaningful takeaways.',
+);
+assert.deepEqual(
+  visibleMatchAnalysisScorers([' Player A 12\' ', '', 'Player B 42\'', 'Player C 63\'', 'Player D 81\'', 'Player E 90+2\'']),
+  ["Player A 12'", "Player B 42'", "Player C 63'", "Player D 81'"],
+  'Match Analysis should limit scorer lines to avoid overflow.',
+);
+assert.equal(
+  matchAnalysisMetricShare({ label: 'Shots', val1: '0', val2: '10' }),
+  0,
+  'A genuine zero value must remain zero rather than falling back to 50.',
+);
+assert.equal(
+  matchAnalysisMetricShare({ label: 'No data', val1: 'N/A', val2: 'N/A' }),
+  50,
+  'Unparseable metric values should use a neutral split.',
+);
+assert.equal(
+  matchAnalysisHeaderLabel('Champions League'),
+  'CHAMPIONS LEAGUE • POST-MATCH ANALYSIS',
+);
+assert.notEqual(
+  matchAnalysisScoreFontSize('FENERBAHÇE', 'LIVERPOOL', false),
+  matchAnalysisScoreFontSize('BORUSSIA MÖNCHENGLADBACH', 'PARIS SAINT-GERMAIN', false),
+  'Long Match Analysis scorelines should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis content rules.');
