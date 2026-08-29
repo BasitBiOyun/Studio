@@ -92,16 +92,26 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col shadow-2xl">
-        <div className="p-4 border-b border-neutral-800 flex justify-between items-center bg-neutral-900/50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-4">
+      <div
+        className="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col shadow-2xl"
+        style={{ maxHeight: '92dvh' }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Crop image"
+      >
+        <div className="p-3 sm:p-4 border-b border-neutral-800 flex justify-between items-center bg-neutral-900/50 shrink-0">
           <h2 className="text-white font-bold text-sm">Crop Image</h2>
-          <button onClick={onCancel} className="text-neutral-400 hover:text-white" aria-label="Close crop editor">
+          <button
+            onClick={onCancel}
+            className="text-neutral-400 hover:text-white min-w-10 min-h-10 flex items-center justify-center rounded-lg hover:bg-neutral-800"
+            aria-label="Close crop editor"
+          >
             <IconX size={20} />
           </button>
         </div>
 
-        <div className="relative w-full h-[400px] bg-neutral-950">
+        <div className="relative w-full h-[min(48dvh,400px)] min-h-[240px] bg-neutral-950 flex-shrink min-w-0">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -115,9 +125,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           />
         </div>
 
-        <div className="p-4 bg-neutral-900 space-y-4">
-          <div className="flex gap-4">
-            <div className="flex-1 space-y-2">
+        <div className="p-3 sm:p-4 bg-neutral-900 space-y-4 shrink-0" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1 space-y-2 min-w-0">
               <label className="text-xs text-neutral-400">Zoom</label>
               <input
                 type="range"
@@ -129,7 +139,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 className="w-full"
               />
             </div>
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 min-w-0">
               <label className="text-xs text-neutral-400">Rotation</label>
               <input
                 type="range"
@@ -143,11 +153,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-1">
             <button
               onClick={handleSave}
               disabled={!croppedAreaPixels || isSaving}
-              className="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg text-sm flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 min-h-11 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg text-sm flex items-center justify-center gap-2"
             >
               <IconCheck size={16} />
               {isSaving ? 'Processing…' : 'Apply Crop'}
