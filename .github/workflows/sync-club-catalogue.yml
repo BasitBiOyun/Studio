@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/sync-uefa-club-catalogue.cjs'
+      - 'scripts/complete-uefa-top-divisions.cjs'
       - '.github/workflows/sync-club-catalogue.yml'
   schedule:
     - cron: '20 4 1 * *'
@@ -30,11 +31,14 @@ jobs:
       - name: Refresh club catalogue
         run: node scripts/sync-uefa-club-catalogue.cjs
 
+      - name: Complete federation-verified top divisions
+        run: node scripts/complete-uefa-top-divisions.cjs
+
       - name: Commit refreshed snapshot
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/clubs_catalogue.json src/data/clubs_catalogue_meta.json
+          git add src/data/clubs_catalogue.json src/data/clubs_catalogue_meta.json public/clubs_catalogue.json public/clubs_catalogue_meta.json
           if git diff --cached --quiet; then
             echo "Catalogue already current."
             exit 0
