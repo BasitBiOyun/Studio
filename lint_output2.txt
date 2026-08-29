@@ -1,0 +1,41 @@
+src/components/EditorSidebar.tsx(370,15): error TS2657: JSX expressions must have one parent element.
+src/components/EditorSidebar.tsx(596,76): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(596,77): error TS1003: Identifier expected.
+src/components/EditorSidebar.tsx(597,21): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(599,19): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/EditorSidebar.tsx(601,21): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/EditorSidebar.tsx(635,80): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(635,81): error TS1003: Identifier expected.
+src/components/EditorSidebar.tsx(636,21): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(638,19): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/EditorSidebar.tsx(640,21): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/EditorSidebar.tsx(641,17): error TS1005: ')' expected.
+src/components/EditorSidebar.tsx(642,15): error TS1005: ')' expected.
+src/components/EditorSidebar.tsx(643,14): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(958,13): error TS17002: Expected corresponding JSX closing tag for 'aside'.
+src/components/EditorSidebar.tsx(1210,70): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(1210,71): error TS1003: Identifier expected.
+src/components/EditorSidebar.tsx(1211,23): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(1213,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/EditorSidebar.tsx(1327,57): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(1327,58): error TS1003: Identifier expected.
+src/components/EditorSidebar.tsx(1328,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(1334,15): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/EditorSidebar.tsx(1336,17): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/EditorSidebar.tsx(1339,13): error TS1005: ')' expected.
+src/components/EditorSidebar.tsx(1356,48): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(1356,49): error TS1003: Identifier expected.
+src/components/EditorSidebar.tsx(1357,21): error TS1005: ',' expected.
+src/components/EditorSidebar.tsx(1363,19): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/EditorSidebar.tsx(1365,21): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/EditorSidebar.tsx(1366,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/EditorSidebar.tsx(1368,13): error TS1128: Declaration or statement expected.
+src/components/EditorSidebar.tsx(1371,18): error TS1005: ';' expected.
+src/components/EditorSidebar.tsx(1372,15): error TS2657: JSX expressions must have one parent element.
+src/components/EditorSidebar.tsx(1397,13): error TS1128: Declaration or statement expected.
+src/components/EditorSidebar.tsx(1398,11): error TS1109: Expression expected.
+src/components/EditorSidebar.tsx(1399,9): error TS1109: Expression expected.
+src/components/EditorSidebar.tsx(1433,7): error TS1128: Declaration or statement expected.
+src/components/EditorSidebar.tsx(1434,5): error TS1109: Expression expected.
+src/components/EditorSidebar.tsx(1435,3): error TS1109: Expression expected.
+src/components/EditorSidebar.tsx(1436,1): error TS1128: Declaration or statement expected.

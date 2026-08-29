@@ -1,0 +1,6 @@
+{
+  "name": "Scouting Graphic Builder",
+  "description": "BasitBiOyun football editorial visual design system and graphics studio for X/Twitter with 12 professional templates, multi-aspect canvases, reference library, brand settings, and ultra-high-resolution exports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

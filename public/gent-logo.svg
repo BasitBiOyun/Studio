@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0055b8" />
+      <stop offset="100%" stop-color="#002d6b" />
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Blue Ring -->
+  <circle cx="150" cy="150" r="142" fill="url(#bgGrad)" stroke="#ffffff" stroke-width="8" filter="url(#shadow)" />
+  <circle cx="150" cy="150" r="132" fill="none" stroke="#00d2ff" stroke-width="2.5" opacity="0.8" />
+  <circle cx="150" cy="150" r="102" fill="none" stroke="#ffffff" stroke-width="4" />
+  
+  <!-- Curved Text: K.A.A. GENT -->
+  <path id="textPathTop" d="M 50 150 A 100 100 0 0 1 250 150" fill="none" />
+  <text font-family="'Montserrat', 'Arial Black', sans-serif" font-size="24" font-weight="900" fill="#ffffff" letter-spacing="4">
+    <textPath href="#textPathTop" startOffset="50%" text-anchor="middle">
+      KAA GENT
+    </textPath>
+  </text>
+  
+  <!-- Curved Text: STAMNUMMER 7 -->
+  <path id="textPathBottom" d="M 250 150 A 100 100 0 0 1 50 150" fill="none" />
+  <text font-family="'Montserrat', 'Arial Black', sans-serif" font-size="14" font-weight="800" fill="#00d2ff" letter-spacing="3">
+    <textPath href="#textPathBottom" startOffset="50%" text-anchor="middle">
+      • 1864 •
+    </textPath>
+  </text>
+
+  <!-- Center Crest Inner Circle -->
+  <circle cx="150" cy="150" r="88" fill="#003b87" stroke="#ffffff" stroke-width="3" />
+
+  <!-- Native Chief / Indian Profile Silhouette (Iconic Gent Buffalo Logo) -->
+  <g transform="translate(150, 148) scale(0.68) translate(-100, -105)">
+    <!-- Feather Headdress -->
+    <path d="M 20 60 C 10 30, 40 10, 60 15 C 80 20, 70 50, 65 75 Z" fill="#ffffff" />
+    <path d="M 45 40 C 45 10, 80 5, 95 20 C 105 35, 90 60, 80 80 Z" fill="#00d2ff" />
+    <path d="M 75 30 C 85 5, 120 10, 130 30 C 135 50, 115 70, 100 85 Z" fill="#ffffff" />
+    <path d="M 105 35 C 125 15, 155 25, 160 50 C 160 70, 140 85, 120 95 Z" fill="#00d2ff" />
+    <path d="M 135 50 C 160 40, 185 55, 180 80 C 175 100, 150 105, 130 110 Z" fill="#ffffff" />
+    <path d="M 155 75 C 180 75, 195 95, 185 120 C 175 135, 150 135, 135 130 Z" fill="#00d2ff" />
+    
+    <!-- Head Band -->
+    <path d="M 60 85 Q 120 100 150 115 L 145 128 Q 115 112 55 98 Z" fill="#ffffff" />
+    <circle cx="75" cy="95" r="4" fill="#003b87" />
+    <circle cx="100" cy="103" r="4" fill="#003b87" />
+    <circle cx="125" cy="112" r="4" fill="#003b87" />
+
+    <!-- Face Silhouette -->
+    <path d="M 95 110 C 115 115, 135 125, 140 135 C 145 145, 135 155, 130 160 C 135 165, 145 170, 140 178 C 135 185, 120 185, 115 192 C 105 205, 80 205, 70 195 C 60 185, 65 170, 60 160 C 55 145, 55 125, 75 115 Z" fill="#ffffff" />
+    
+    <!-- Neck / Shoulder -->
+    <path d="M 70 195 C 75 210, 85 225, 105 230 C 115 220, 120 205, 115 192 Z" fill="#ffffff" />
+  </g>
+</svg>
