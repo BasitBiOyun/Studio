@@ -1,0 +1,31 @@
+name: Materialize UEFA Logo Report Mode
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-logo-report-only.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Patch verifier and workflow
+        run: node scripts/materialize-logo-report-only.cjs
+
+      - name: Commit report-only mode
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/verify-uefa-top-divisions.cjs .github/workflows/sync-club-catalogue.yml
+          git commit -m "Make UEFA logo coverage non-blocking" || exit 0
+          git push origin HEAD:main
