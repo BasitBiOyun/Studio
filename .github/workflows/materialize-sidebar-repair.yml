@@ -1,0 +1,35 @@
+name: Materialize EditorSidebar Repair
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-sidebar-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply verified repair to source
+        run: node scripts/repair-editor-sidebar.cjs
+
+      - name: Commit repaired source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/EditorSidebar.tsx
+          if git diff --cached --quiet; then
+            echo "EditorSidebar already materialized."
+            exit 0
+          fi
+          git commit -m "Materialize EditorSidebar runtime integrations"
+          git push origin HEAD:main
