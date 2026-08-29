@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "uefa-club-catalogue-v1",
+  "generatedAt": "2026-08-29T17:27:24.608Z",
+  "target": "UEFA men domestic top divisions",
+  "uefaMemberAssociations": 55,
+  "domesticLeagueAssociationsExpected": 54,
+  "liechtensteinNote": "Liechtenstein has no domestic league; its clubs play in the Swiss league system.",
+  "totalEntries": 703,
+  "topDivisionEntries": 449,
+  "representedAssociations": 53,
+  "topDivisionAssociations": 34,
+  "fallbackAssociations": [
+    {
+      "association": "Albania",
+      "entries": 21
+    },
+    {
+      "association": "Georgia",
+      "entries": 22
+    },
+    {
+      "association": "Gibraltar",
+      "entries": 2
+    },
+    {
+      "association": "Hungary",
+      "entries": 31
+    },
+    {
+      "association": "Iceland",
+      "entries": 23
+    },
+    {
+      "association": "Kazakhstan",
+      "entries": 21
+    },
+    {
+      "association": "Kosovo",
+      "entries": 2
+    },
+    {
+      "association": "Latvia",
+      "entries": 14
+    },
+    {
+      "association": "Lithuania",
+      "entries": 16
+    },
+    {
+      "association": "Luxembourg",
+      "entries": 1
+    },
+    {
+      "association": "Malta",
+      "entries": 2
+    },
+    {
+      "association": "Moldova",
+      "entries": 1
+    },
+    {
+      "association": "Montenegro",
+      "entries": 1
+    },
+    {
+      "association": "North Macedonia",
+      "entries": 2
+    },
+    {
+      "association": "Northern Ireland",
+      "entries": 18
+    },
+    {
+      "association": "San Marino",
+      "entries": 1
+    },
+    {
+      "association": "Slovakia",
+      "entries": 19
+    },
+    {
+      "association": "Slovenia",
+      "entries": 17
+    },
+    {
+      "association": "Wales",
+      "entries": 40
+    }
+  ],
+  "missingAssociations": [
+    "Republic of Ireland"
+  ],
+  "topDivisionMissing": [
+    "Albania",
+    "Georgia",
+    "Gibraltar",
+    "Hungary",
+    "Iceland",
+    "Kazakhstan",
+    "Kosovo",
+    "Latvia",
+    "Lithuania",
+    "Luxembourg",
+    "Malta",
+    "Moldova",
+    "Montenegro",
+    "North Macedonia",
+    "Northern Ireland",
+    "Republic of Ireland",
+    "San Marino",
+    "Slovakia",
+    "Slovenia",
+    "Wales"
+  ],
+  "sources": [
+    "luukhopman/football-logos current 2026/27 top-25 league membership",
+    "Wikidata current league membership (P118) and logo (P154)",
+    "JoseArroyave/football-logos SVG catalogue for high-quality crest resolution and small-association fallback"
+  ]
+}
