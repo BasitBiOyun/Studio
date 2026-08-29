@@ -30,6 +30,12 @@ import {
   visibleExecutionTriggers,
   visibleTacticalPrinciples,
 } from '../src/services/tacticalAnalysis';
+import {
+  statHighlightHeroFontSize,
+  statHighlightSubjectFontSize,
+  statHighlightSubjectMeta,
+  visibleStatHighlightMetrics,
+} from '../src/services/statHighlight';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -184,4 +190,31 @@ assert.notEqual(
   'Long Tactical Analysis topics should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis content rules.');
+assert.equal(
+  visibleStatHighlightMetrics([
+    { id: '1', label: 'Passes /90', value: '45', icon: 'chart' },
+    { id: '2', label: '', value: '8', icon: 'chart' },
+    { id: '3', label: 'xA /90', value: '0.31', icon: 'chart' },
+    { id: '4', label: 'Key Passes', value: '2.2', icon: 'chart' },
+    { id: '5', label: 'Carries', value: '3.4', icon: 'chart' },
+    { id: '6', label: 'Extra', value: '99', icon: 'chart' },
+  ]).length,
+  4,
+  'Stat Highlight should keep at most four meaningful context metrics.',
+);
+assert.equal(
+  statHighlightSubjectMeta('AM / SS', 'Eintracht Frankfurt'),
+  'AM / SS • Eintracht Frankfurt',
+);
+assert.notEqual(
+  statHighlightHeroFontSize('94.2%', false),
+  statHighlightHeroFontSize('12345.678 /90', false),
+  'Long hero stat values should scale down rather than overflow.',
+);
+assert.notEqual(
+  statHighlightSubjectFontSize('CAN UZUN', false),
+  statHighlightSubjectFontSize('A VERY LONG PLAYER OR TEAM SUBJECT NAME', false),
+  'Long Stat Highlight subjects should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis + Stat Highlight content rules.');
