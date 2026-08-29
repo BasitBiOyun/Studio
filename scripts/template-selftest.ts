@@ -36,6 +36,13 @@ import {
   statHighlightSubjectMeta,
   visibleStatHighlightMetrics,
 } from '../src/services/statHighlight';
+import {
+  rankingMeta,
+  rankingNameFontSize,
+  rankingTitleFontSize,
+  rankingValueFontSize,
+  visibleRankingItems,
+} from '../src/services/ranking';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -217,4 +224,37 @@ assert.notEqual(
   'Long Stat Highlight subjects should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis + Stat Highlight content rules.');
+assert.deepEqual(
+  visibleRankingItems([
+    { id: '3', rank: 3, playerName: ' Player C ', club: 'Club C', val: ' 7.2 ', subVal: 'U23' },
+    { id: '1', rank: 1, playerName: 'Player A', club: 'Club A', val: '9.8' },
+    { id: 'empty', rank: 2, playerName: '', club: 'Club B', val: '8.1' },
+    { id: '2', rank: 2, playerName: 'Player B', club: 'Club B', val: '8.1' },
+    { id: '4', rank: 4, playerName: 'Player D', club: 'Club D', val: '6.9' },
+    { id: '5', rank: 5, playerName: 'Player E', club: 'Club E', val: '6.4' },
+    { id: '6', rank: 6, playerName: 'Player F', club: 'Club F', val: '6.0' },
+  ]).map((item) => item.id),
+  ['1', '2', '3', '4', '5'],
+  'Ranking Top List should sort supplied ranks, remove empty entries, and render at most five rows.',
+);
+assert.equal(
+  rankingMeta('Eintracht Frankfurt', 'U21 • 900+ MIN'),
+  'Eintracht Frankfurt • U21 • 900+ MIN',
+);
+assert.notEqual(
+  rankingTitleFontSize('TOP 5 CREATORS', false),
+  rankingTitleFontSize('TOP 5 UNDER-23 CHANCE CREATORS ACROSS EUROPE', false),
+  'Long ranking titles should scale down rather than overflow.',
+);
+assert.notEqual(
+  rankingNameFontSize('CAN UZUN', false),
+  rankingNameFontSize('A VERY LONG PLAYER DISPLAY NAME', false),
+  'Long ranking names should scale down rather than overflow.',
+);
+assert.notEqual(
+  rankingValueFontSize('9.82', false),
+  rankingValueFontSize('12345.678 /90', false),
+  'Long ranking values should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis + Stat Highlight + Ranking Top List content rules.');
