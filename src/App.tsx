@@ -11,7 +11,7 @@ import {
   saveCurrentProject,
 } from './services/storage';
 import { useHistory } from './hooks/useHistory';
-import { exportGraphic, copyGraphicToClipboard, isMobileDevice } from './services/exporter';
+import { exportGraphic, copyGraphicToClipboard } from './services/exporter';
 import { ScoutingCard } from './components/ScoutingCard';
 import { InteractiveCanvas } from './components/InteractiveCanvas';
 import { EditorSidebar } from './components/EditorSidebar';
@@ -24,21 +24,10 @@ import { QualityCheckModal } from './components/QualityCheckModal';
 import {
   IconZoomIn,
   IconZoomOut,
-  IconArrowsMove,
   IconEdit,
 } from '@tabler/icons-react';
 
 export default function App() {
-  const [projectState, setProjectState] = useState<Project | null>(null);
-  
-  useEffect(() => {
-    async function init() {
-      // Assuming loadCurrentProject becomes async
-      const proj = await loadCurrentProject();
-      setProjectState(proj);
-    }
-    init();
-  }, []);
   const {
     currentProject,
     pushState,
@@ -47,7 +36,37 @@ export default function App() {
     redo,
     canUndo,
     canRedo,
-  } = useHistory(projectState);
+  } = useHistory(DEFAULT_PROJECT);
+
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        const project = await loadCurrentProject();
+        if (!cancelled) {
+          resetHistory(project);
+        }
+      } catch (error) {
+        console.error('Failed to load current project. Falling back to defaults.', error);
+        if (!cancelled) {
+          resetHistory(DEFAULT_PROJECT);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    };
+
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resetHistory]);
 
   // UI modal states
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -73,7 +92,7 @@ export default function App() {
   const [autoFit, setAutoFit] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  
+
   // Panning State
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -81,7 +100,6 @@ export default function App() {
 
   // Mouse Handlers for Panning
   const handlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    // Only allow pan on left click or middle click
     if (e.button !== 0 && e.button !== 1) return;
     setIsPanning(true);
     setLastPanPos({ x: e.clientX, y: e.clientY });
@@ -99,24 +117,29 @@ export default function App() {
   const handlePointerUp = (e: React.PointerEvent<HTMLElement>) => {
     setIsPanning(false);
     setLastPanPos(null);
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   // Show Toast
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    window.setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Debounced auto-save
+  // Debounced auto-save. Do not write the default project before IndexedDB hydration completes.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      saveCurrentProject(currentProject).catch(console.error);
-    }, 400);
-    if (!projectState) return <div className="flex h-screen items-center justify-center bg-black text-white">Loading Editor...</div>;
+    if (!isHydrated) return;
 
-  return () => clearTimeout(timer);
-  }, [currentProject]);
+    const timer = window.setTimeout(() => {
+      saveCurrentProject(currentProject).catch((error) => {
+        console.error('Failed to auto-save project.', error);
+      });
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [currentProject, isHydrated]);
 
   // Compute responsive scale for dynamic canvas dimensions inside viewport
   const updateScale = useCallback(() => {
@@ -230,7 +253,7 @@ export default function App() {
 
   // High-Res Graphic Export
   const handleExportGraphic = async (scaleMultiplier: 1 | 2 | 4, format: ExportFormat) => {
-    if (!cardElementRef.current) return;
+    if (!exportElementRef.current) return;
     try {
       setIsExporting(true);
       const titleSlug = (
@@ -261,7 +284,7 @@ export default function App() {
 
   // Copy to Clipboard
   const handleCopyClipboard = async () => {
-    if (!cardElementRef.current) return;
+    if (!exportElementRef.current) return;
     try {
       setIsExporting(true);
       setExportStatus('Copying image...');
@@ -320,7 +343,6 @@ export default function App() {
         <button
           onClick={() => {
             setIsSidebarOpen(!isSidebarOpen);
-            // Trigger a resize event to recalculate canvas scale
             setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
           }}
           className={`hidden md:flex absolute top-1/2 -translate-y-1/2 z-40 bg-neutral-800 border border-neutral-700 text-white rounded-full p-1.5 shadow-lg hover:bg-neutral-700 transition-all duration-300 ${
@@ -496,14 +518,13 @@ export default function App() {
       )}
 
       {/* Hidden Native Resolution Render for Export */}
-      <div 
+      <div
         style={{
           position: 'absolute',
           top: '-9999px',
           left: '-9999px',
           width: `${activeDimensions.width}px`,
           height: `${activeDimensions.height}px`,
-          
           pointerEvents: 'none',
           zIndex: -9999,
           overflow: 'hidden'
