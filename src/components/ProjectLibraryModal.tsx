@@ -33,77 +33,115 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
   onSelectProject,
 }) => {
   const [projects, setProjects] = useState<Project[]>([]);
-  useEffect(() => {
-    loadProjectsList().then(setProjects);
-  }, []);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewInput, setShowNewInput] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      loadProjectsList().then(setProjects);
-    }
+    if (!isOpen) return;
+    loadProjectsList().then(setProjects).catch((error) => {
+      console.error('Failed to load project library.', error);
+      setErrorMsg('Could not load saved projects.');
+    });
   }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const refreshProjects = async () => {
+    const nextProjects = await loadProjectsList();
+    setProjects(nextProjects);
+    return nextProjects;
+  };
+
   const handleCreateNew = async () => {
-    const brand = await loadBrandSettings();
-    const created = await createNewProjectFromBrand(brand, 'scouting-report');
-    if (newProjectName.trim()) {
-      created.name = newProjectName.trim();
-      created.sharedData.player.name = newProjectName.trim().toUpperCase();
+    if (isBusy) return;
+    try {
+      setIsBusy(true);
+      setErrorMsg(null);
+      const brand = await loadBrandSettings();
+      const created = await createNewProjectFromBrand(brand, 'scouting-report');
+      if (newProjectName.trim()) {
+        created.name = newProjectName.trim();
+        created.sharedData.player.name = newProjectName.trim().toUpperCase();
+      }
+      onSelectProject(created);
+      await refreshProjects();
+      setNewProjectName('');
+      setShowNewInput(false);
+      onClose();
+    } catch (error) {
+      console.error('Failed to create project.', error);
+      setErrorMsg('Could not create a new graphic.');
+    } finally {
+      setIsBusy(false);
     }
-    loadProjectsList().then(setProjects);
-    onSelectProject(created);
-    setNewProjectName('');
-    setShowNewInput(false);
-    onClose();
   };
 
-  const handleDuplicate = (p: Project) => {
-    const copy = duplicateProjectInList(p.id);
-    if (copy) {
-      loadProjectsList().then(setProjects);
+  const handleDuplicate = async (p: Project) => {
+    if (isBusy) return;
+    try {
+      setIsBusy(true);
+      setErrorMsg(null);
+      const copy = await duplicateProjectInList(p.id);
+      if (!copy) {
+        setErrorMsg('Could not find the project to duplicate.');
+        return;
+      }
       onSelectProject(copy);
+      await refreshProjects();
+    } catch (error) {
+      console.error('Failed to duplicate project.', error);
+      setErrorMsg('Could not duplicate this project.');
+    } finally {
+      setIsBusy(false);
     }
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this project?')) {
-      const remaining = deleteProjectFromList(id);
+    if (isBusy || !confirm('Are you sure you want to delete this project?')) return;
+
+    try {
+      setIsBusy(true);
+      setErrorMsg(null);
+      const remaining = await deleteProjectFromList(id);
       setProjects(remaining);
       if (currentProject.id === id && remaining[0]) {
         onSelectProject(remaining[0]);
       }
+    } catch (error) {
+      console.error('Failed to delete project.', error);
+      setErrorMsg('Could not delete this project.');
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        setErrorMsg(null);
-        const imported = await importProjectFromJson(file);
-        loadProjectsList().then(setProjects);
-        onSelectProject(imported);
-        onClose();
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Failed to parse JSON project file');
-      }
+    if (!file || isBusy) return;
+
+    try {
+      setIsBusy(true);
+      setErrorMsg(null);
+      const imported = await importProjectFromJson(file);
+      onSelectProject(imported);
+      await refreshProjects();
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to parse JSON project file');
+    } finally {
+      e.target.value = '';
+      setIsBusy(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal Container */}
       <div className="relative w-full max-w-2xl bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-10">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-neutral-800 bg-neutral-900/60">
           <div className="flex items-center gap-2">
             <IconFolder className="text-cyan-400" size={20} />
@@ -119,12 +157,12 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
           </button>
         </div>
 
-        {/* Action Toolbar */}
         <div className="p-4 bg-neutral-900/30 border-b border-neutral-800 flex flex-wrap gap-2 items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowNewInput(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 text-neutral-950 font-bold text-xs hover:bg-cyan-400 transition-colors shadow-sm"
+              disabled={isBusy}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 text-neutral-950 font-bold text-xs hover:bg-cyan-400 transition-colors shadow-sm disabled:opacity-50"
             >
               <IconPlus size={15} />
               <span>New Graphic</span>
@@ -138,7 +176,7 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
               <span>Export JSON</span>
             </button>
 
-            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white cursor-pointer transition-colors">
+            <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white cursor-pointer transition-colors ${isBusy ? 'opacity-50 pointer-events-none' : ''}`}>
               <IconUpload size={15} />
               <span>Import JSON</span>
               <input
@@ -155,14 +193,12 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
           </span>
         </div>
 
-        {/* Error Alert */}
         {errorMsg && (
           <div className="mx-4 mt-3 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-300">
             {errorMsg}
           </div>
         )}
 
-        {/* New Project Input Field */}
         {showNewInput && (
           <div className="p-4 bg-neutral-900/80 border-b border-neutral-800 flex items-center gap-2 animate-in fade-in duration-150">
             <input
@@ -170,33 +206,40 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
               placeholder="Enter player or headline..."
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateNew()}
+              onKeyDown={(e) => e.key === 'Enter' && void handleCreateNew()}
               autoFocus
-              className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              disabled={isBusy}
+              className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:outline-none disabled:opacity-50"
             />
             <button
-              onClick={handleCreateNew}
-              className="px-3 py-1.5 bg-cyan-500 text-neutral-950 font-bold text-xs rounded-lg hover:bg-cyan-400"
+              onClick={() => void handleCreateNew()}
+              disabled={isBusy}
+              className="px-3 py-1.5 bg-cyan-500 text-neutral-950 font-bold text-xs rounded-lg hover:bg-cyan-400 disabled:opacity-50"
             >
               Create
             </button>
             <button
               onClick={() => setShowNewInput(false)}
-              className="px-3 py-1.5 bg-neutral-800 text-neutral-400 text-xs rounded-lg hover:text-white"
+              disabled={isBusy}
+              className="px-3 py-1.5 bg-neutral-800 text-neutral-400 text-xs rounded-lg hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>
           </div>
         )}
 
-        {/* Project List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
           {projects.map((p) => {
             const isCurrent = p.id === currentProject.id;
+            const activeTheme = p.templates?.[p.templateType]?.theme || p.templates?.['scouting-report']?.theme;
+            const accent = activeTheme?.primaryAccent || '#22d3ee';
+            const displayName = p.name || p.sharedData?.player?.name || 'Untitled Graphic';
+
             return (
               <div
                 key={p.id}
                 onClick={() => {
+                  if (isBusy) return;
                   onSelectProject(p);
                   onClose();
                 }}
@@ -206,44 +249,45 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
                     : 'border-neutral-800/80 bg-neutral-900/40 hover:bg-neutral-900 hover:border-neutral-700'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0"
                     style={{
-                      backgroundColor: `${p.theme.primaryAccent}22`,
-                      color: p.theme.primaryAccent,
-                      border: `1px solid ${p.theme.primaryAccent}44`,
+                      backgroundColor: `${accent}22`,
+                      color: accent,
+                      border: `1px solid ${accent}44`,
                     }}
                   >
-                    {(p.sharedData?.player?.name || p.name || 'BB').substring(0, 2).toUpperCase()}
+                    {displayName.substring(0, 2).toUpperCase()}
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold text-white">
-                        {p.sharedData?.player?.name || p.name || 'Untitled Graphic'}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h4 className="text-xs font-bold text-white truncate">
+                        {displayName}
                       </h4>
                       {isCurrent && (
-                        <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold rounded">
+                        <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold rounded flex-shrink-0">
                           Active
                         </span>
                       )}
-                      <span className="text-[10px] px-1.5 py-0.5 bg-neutral-800 text-neutral-400 rounded uppercase">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-neutral-800 text-neutral-400 rounded uppercase flex-shrink-0">
                         {p.templateType}
                       </span>
                     </div>
                     <div className="text-[11px] text-neutral-400 flex items-center gap-2 mt-0.5">
-                      <span>{p.sharedData?.player?.club || p.aspectRatio}</span>
+                      <span className="truncate">{p.sharedData?.player?.club || p.aspectRatio}</span>
                       <span>•</span>
                       <span>{new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => handleDuplicate(p)}
-                    className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                    onClick={() => void handleDuplicate(p)}
+                    disabled={isBusy}
+                    className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors disabled:opacity-40"
                     title="Duplicate Project"
                   >
                     <IconCopy size={16} />
@@ -259,8 +303,9 @@ export const ProjectLibraryModal: React.FC<ProjectLibraryModalProps> = ({
 
                   {projects.length > 1 && (
                     <button
-                      onClick={(e) => handleDelete(p.id, e)}
-                      className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-colors"
+                      onClick={(e) => void handleDelete(p.id, e)}
+                      disabled={isBusy}
+                      className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-colors disabled:opacity-40"
                       title="Delete Project"
                     >
                       <IconTrash size={16} />
