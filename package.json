@@ -4,10 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/repair-editor-sidebar.cjs",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "test:data-layer": "tsx scripts/data-layer-selftest.ts && tsx scripts/data-migration-selftest.ts",
     "test:templates": "tsx scripts/template-selftest.ts",
-    "build": "npm run test:data-layer && npm run test:templates && vite build",
+    "test:sidebar": "tsx scripts/sidebar-runtime-selftest.ts",
+    "prebuild": "node scripts/repair-editor-sidebar.cjs",
+    "build": "npm run lint && npm run test:sidebar && npm run test:data-layer && npm run test:templates && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
