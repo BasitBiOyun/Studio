@@ -14,6 +14,7 @@ const app = read('src/App.tsx');
 const topBar = read('src/components/TopBar.tsx');
 const drawer = read('src/components/MobileDrawer.tsx');
 const css = read('src/index.css');
+const html = read('index.html');
 const pkg = JSON.parse(read('package.json'));
 
 expectContains(app, 'h-[100dvh]', 'app must use dynamic viewport height');
@@ -29,6 +30,10 @@ expectContains(drawer, 'maxHeight: \'92dvh\'', 'drawer must use dynamic viewport
 expectContains(css, '.responsive-bottom', 'safe-area floating control rule must exist');
 expectContains(css, '.mobile-editor-sidebar', 'mobile editor responsive form rules must exist');
 expectContains(css, '@media (max-width: 380px)', 'very narrow phone layout must be handled');
+expectContains(html, 'viewport-fit=cover', 'viewport must expose device safe areas');
+if (html.includes('user-scalable=no') || html.includes('maximum-scale=1')) {
+  throw new Error('Responsive self-test failed: mobile viewport must not disable user zoom');
+}
 
 if (String(pkg.scripts?.prebuild || '').includes('sync-uefa-club-catalogue')) {
   throw new Error('Responsive self-test failed: production build must not depend on live club catalogue sync');
