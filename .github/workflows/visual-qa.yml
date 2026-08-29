@@ -1,0 +1,64 @@
+name: Responsive Visual QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/visual-regression-qa.mjs'
+      - '.github/workflows/visual-qa.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'index.html'
+
+concurrency:
+  group: responsive-visual-qa
+  cancel-in-progress: true
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Playwright runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start Studio
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/studio-vite.log 2>&1 &
+          echo $! > /tmp/studio-vite.pid
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/studio-vite.log
+          exit 1
+
+      - name: Capture all templates at six breakpoints
+        run: node scripts/visual-regression-qa.mjs
+
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-responsive-visual-qa
+          path: artifacts/visual-qa
+          if-no-files-found: warn
+          retention-days: 14
