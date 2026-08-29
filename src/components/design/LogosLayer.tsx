@@ -7,14 +7,13 @@ interface LogosLayerProps {
 }
 
 export const LogosLayer: React.FC<LogosLayerProps> = ({ logos, className = '' }) => {
-  const visibleLogos = (logos || []).filter((l) => l.visible && l.src);
+  const visibleLogos = (logos || []).filter((logo) => logo.visible && logo.src);
 
   if (visibleLogos.length === 0) return null;
 
   return (
     <div className={`absolute inset-0 pointer-events-none z-30 ${className}`}>
       {visibleLogos.map((logo, index) => {
-        // Compute base position if custom x/y is 0
         const defaultTop = 70;
         const defaultRight = 70 + index * 160;
 
@@ -28,13 +27,25 @@ export const LogosLayer: React.FC<LogosLayerProps> = ({ logos, className = '' })
         };
 
         return (
-          <div key={logo.id || index} style={style} data-moveable-id={`logo-${logo.id || index}`} data-x={logo.x || 0} data-y={logo.y || 0} data-scale={1} className="moveable-target flex items-center justify-center pointer-events-auto">
+          <div
+            key={logo.id || index}
+            style={style}
+            data-moveable-id={`logo-${logo.id || index}`}
+            data-x={logo.x || 0}
+            data-y={logo.y || 0}
+            data-scale={1}
+            className="moveable-target flex items-center justify-center pointer-events-auto"
+          >
             <img
               src={logo.src}
-              alt={logo.name}
+              alt={logo.name || 'Logo'}
               className="max-w-full max-h-full object-contain filter drop-shadow(0 15px 25px rgba(0,0,0,0.7))"
               crossOrigin={logo.src?.startsWith('http') ? 'anonymous' : undefined}
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                console.warn('Logo visual failed to load.', logo.src);
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
         );
