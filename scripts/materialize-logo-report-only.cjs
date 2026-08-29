@@ -16,29 +16,100 @@ replaceVerifier(
   'main anchor missing',
 );
 
-replaceVerifier(
-  "  if (unresolved.length) throw new Error(`Unresolved current top-flight logos (${unresolved.length}): ${unresolved.join(' | ')}`);\n\n  rows = dedupe(rows).sort((a, b) => a.country.localeCompare(b.country) || String(a.league || '').localeCompare(String(b.league || '')) || a.name.localeCompare(b.name));",
-  `  const writeCoverageReport = (status, extra = {}) => {\n    const reportDir = path.join(ROOT, 'artifacts');\n    fs.mkdirSync(reportDir, { recursive: true });\n    const report = {\n      generatedAt: new Date().toISOString(),\n      mode: reportOnly ? 'report-only' : 'strict',\n      status,\n      expectedAssociations: 54,\n      checkedManualAssociations: DIVISIONS.length,\n      unresolvedCount: unresolved.length,\n      unresolved,\n      coverage,\n      ...extra,\n    };\n    fs.writeFileSync(path.join(reportDir, 'uefa-logo-report.json'), \\`\\${JSON.stringify(report, null, 2)}\\n\\`, 'utf8');\n  };\n\n  if (unresolved.length) {\n    writeCoverageReport('incomplete');\n    const message = \\`Unresolved current top-flight logos (\\${unresolved.length}): \\${unresolved.join(' | ')}\\`;\n    if (reportOnly) {\n      console.warn(\\`[clubs] REPORT ONLY: \\${message}\\`);\n      console.log('[clubs] Coverage gaps were recorded without failing the workflow.');\n      return;\n    }\n    throw new Error(message);\n  }\n\n  rows = dedupe(rows).sort((a, b) => a.country.localeCompare(b.country) || String(a.league || '').localeCompare(String(b.league || '')) || a.name.localeCompare(b.name));`,
-  'unresolved coverage anchor missing',
-);
+const oldUnresolved = [
+  '  if (unresolved.length) throw new Error(`Unresolved current top-flight logos (${unresolved.length}): ${unresolved.join(\' | \')}`);',
+  '',
+  "  rows = dedupe(rows).sort((a, b) => a.country.localeCompare(b.country) || String(a.league || '').localeCompare(String(b.league || '')) || a.name.localeCompare(b.name));",
+].join('\n');
+
+const newUnresolved = [
+  '  const writeCoverageReport = (status, extra = {}) => {',
+  "    const reportDir = path.join(ROOT, 'artifacts');",
+  '    fs.mkdirSync(reportDir, { recursive: true });',
+  '    const report = {',
+  '      generatedAt: new Date().toISOString(),',
+  "      mode: reportOnly ? 'report-only' : 'strict',",
+  '      status,',
+  '      expectedAssociations: 54,',
+  '      checkedManualAssociations: DIVISIONS.length,',
+  '      unresolvedCount: unresolved.length,',
+  '      unresolved,',
+  '      coverage,',
+  '      ...extra,',
+  '    };',
+  "    fs.writeFileSync(path.join(reportDir, 'uefa-logo-report.json'), `${JSON.stringify(report, null, 2)}\\n`, 'utf8');",
+  '  };',
+  '',
+  '  if (unresolved.length) {',
+  "    writeCoverageReport('incomplete');",
+  "    const message = `Unresolved current top-flight logos (${unresolved.length}): ${unresolved.join(' | ')}`;",
+  '    if (reportOnly) {',
+  '      console.warn(`[clubs] REPORT ONLY: ${message}`);',
+  "      console.log('[clubs] Coverage gaps were recorded without failing the workflow.');",
+  '      return;',
+  '    }',
+  '    throw new Error(message);',
+  '  }',
+  '',
+  "  rows = dedupe(rows).sort((a, b) => a.country.localeCompare(b.country) || String(a.league || '').localeCompare(String(b.league || '')) || a.name.localeCompare(b.name));",
+].join('\n');
+
+replaceVerifier(oldUnresolved, newUnresolved, 'unresolved coverage anchor missing');
 
 replaceVerifier(
-  "  if (topCountries.size !== 54) throw new Error(`Expected 54 domestic UEFA top divisions, got ${topCountries.size}.`);",
-  `  if (topCountries.size !== 54) {\n    writeCoverageReport('association-count-mismatch', { topDivisionAssociations: topCountries.size });\n    const message = \\`Expected 54 domestic UEFA top divisions, got \\${topCountries.size}.\\`;\n    if (reportOnly) {\n      console.warn(\\`[clubs] REPORT ONLY: \\${message}\\`);\n      return;\n    }\n    throw new Error(message);\n  }`,
+  '  if (topCountries.size !== 54) throw new Error(`Expected 54 domestic UEFA top divisions, got ${topCountries.size}.`);',
+  [
+    '  if (topCountries.size !== 54) {',
+    "    writeCoverageReport('association-count-mismatch', { topDivisionAssociations: topCountries.size });",
+    '    const message = `Expected 54 domestic UEFA top divisions, got ${topCountries.size}.`;',
+    '    if (reportOnly) {',
+    '      console.warn(`[clubs] REPORT ONLY: ${message}`);',
+    '      return;',
+    '    }',
+    '    throw new Error(message);',
+    '  }',
+  ].join('\n'),
   'association count anchor missing',
 );
 
-replaceVerifier(
-  "  writeJson(CATALOGUE_FILES, rows);\n  writeJson(META_FILES, nextMeta);\n  console.log(`[clubs] COMPLETE: ${topCountries.size}/54 domestic UEFA associations, ${topRows.length} top-flight club logo rows.`);",
-  `  writeJson(CATALOGUE_FILES, rows);\n  writeJson(META_FILES, nextMeta);\n  writeCoverageReport('complete', { topDivisionAssociations: topCountries.size, topDivisionEntries: topRows.length });\n  console.log(\\`[clubs] COMPLETE: \\${topCountries.size}/54 domestic UEFA associations, \\${topRows.length} top-flight club logo rows.\\`);`,
-  'successful write anchor missing',
-);
+const oldSuccess = [
+  '  writeJson(CATALOGUE_FILES, rows);',
+  '  writeJson(META_FILES, nextMeta);',
+  '  console.log(`[clubs] COMPLETE: ${topCountries.size}/54 domestic UEFA associations, ${topRows.length} top-flight club logo rows.`);',
+].join('\n');
 
+const newSuccess = [
+  '  writeJson(CATALOGUE_FILES, rows);',
+  '  writeJson(META_FILES, nextMeta);',
+  "  writeCoverageReport('complete', { topDivisionAssociations: topCountries.size, topDivisionEntries: topRows.length });",
+  '  console.log(`[clubs] COMPLETE: ${topCountries.size}/54 domestic UEFA associations, ${topRows.length} top-flight club logo rows.`);',
+].join('\n');
+
+replaceVerifier(oldSuccess, newSuccess, 'successful write anchor missing');
 fs.writeFileSync(verifierFile, verifier, 'utf8');
 
 let workflow = fs.readFileSync(workflowFile, 'utf8');
-const oldStep = `      - name: Verify all UEFA domestic top divisions\n        run: node scripts/verify-uefa-top-divisions.cjs\n\n      - name: Commit refreshed snapshot`;
-const newStep = `      - name: Verify UEFA domestic top divisions (report only)\n        run: node scripts/verify-uefa-top-divisions.cjs --report-only\n\n      - name: Upload UEFA logo coverage report\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: uefa-logo-coverage-report\n          path: artifacts/uefa-logo-report.json\n          if-no-files-found: warn\n          retention-days: 30\n\n      - name: Commit refreshed snapshot`;
+const oldStep = [
+  '      - name: Verify all UEFA domestic top divisions',
+  '        run: node scripts/verify-uefa-top-divisions.cjs',
+  '',
+  '      - name: Commit refreshed snapshot',
+].join('\n');
+const newStep = [
+  '      - name: Verify UEFA domestic top divisions (report only)',
+  '        run: node scripts/verify-uefa-top-divisions.cjs --report-only',
+  '',
+  '      - name: Upload UEFA logo coverage report',
+  '        if: always()',
+  '        uses: actions/upload-artifact@v4',
+  '        with:',
+  '          name: uefa-logo-coverage-report',
+  '          path: artifacts/uefa-logo-report.json',
+  '          if-no-files-found: warn',
+  '          retention-days: 30',
+  '',
+  '      - name: Commit refreshed snapshot',
+].join('\n');
 
 if (!workflow.includes(oldStep)) throw new Error('Logo report patch failed: workflow verifier step anchor missing');
 workflow = workflow.replace(oldStep, newStep);
