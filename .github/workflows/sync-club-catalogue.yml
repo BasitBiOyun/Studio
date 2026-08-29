@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/sync-uefa-club-catalogue.cjs'
+      - 'scripts/patch-uefa-logo-gaps.cjs'
       - 'scripts/verify-uefa-top-divisions.cjs'
       - '.github/workflows/sync-club-catalogue.yml'
   schedule:
@@ -34,6 +35,9 @@ jobs:
 
       - name: Refresh club catalogue
         run: node scripts/sync-uefa-club-catalogue.cjs
+
+      - name: Patch unresolved crest IDs
+        run: node scripts/patch-uefa-logo-gaps.cjs
 
       - name: Verify all UEFA domestic top divisions
         run: node scripts/verify-uefa-top-divisions.cjs
