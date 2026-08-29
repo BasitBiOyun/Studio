@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/repair-editor-sidebar.cjs",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "sync:clubs": "node scripts/sync-uefa-club-catalogue.cjs",
     "test:data-layer": "tsx scripts/data-layer-selftest.ts && tsx scripts/data-migration-selftest.ts",
@@ -12,7 +11,6 @@
     "test:sidebar": "tsx scripts/sidebar-runtime-selftest.ts",
     "test:core": "tsx scripts/core-editor-selftest.ts",
     "test:responsive": "tsx scripts/responsive-selftest.ts",
-    "prebuild": "node scripts/repair-editor-sidebar.cjs",
     "build": "npm run test:sidebar && npm run test:data-layer && npm run test:templates && npm run test:core && npm run test:responsive && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
