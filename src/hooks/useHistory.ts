@@ -1,48 +1,39 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Project } from '../types';
 
-export function useHistory(initialProject: Project | null) {
-  const [history, setHistory] = useState<Project[]>(initialProject ? [initialProject] : []);
-  const [initialized, setInitialized] = useState(!!initialProject);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+const MAX_HISTORY = 50;
 
-  const currentProject = history[currentIndex] || initialProject || {} as Project;
+export function useHistory(initialProject: Project) {
+  const [history, setHistory] = useState<Project[]>([initialProject]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    if (initialProject && !initialized) {
-      setHistory([initialProject]);
-      setCurrentIndex(0);
-      setInitialized(true);
-    }
-  }, [initialProject, initialized]);
+  const currentProject = history[currentIndex] ?? initialProject;
 
   const pushState = useCallback((newProject: Project, replaceCurrent = false) => {
-    setHistory((prev) => {
+    setHistory((previousHistory) => {
       if (replaceCurrent) {
-        const next = [...prev];
-        next[currentIndex] = newProject;
-        return next;
+        const nextHistory = [...previousHistory];
+        nextHistory[currentIndex] = newProject;
+        return nextHistory;
       }
 
-      // Check if state is essentially the same to prevent bloated history
-      const current = prev[currentIndex];
+      const current = previousHistory[currentIndex];
       if (current && JSON.stringify(current) === JSON.stringify(newProject)) {
-        return prev;
+        return previousHistory;
       }
 
-      const truncated = prev.slice(0, currentIndex + 1);
-      const next = [...truncated, newProject];
+      const nextHistory = [
+        ...previousHistory.slice(0, currentIndex + 1),
+        newProject,
+      ];
 
-      // Keep max 50 states
-      if (next.length > 50) {
-        return next.slice(next.length - 50);
-      }
-
-      return next;
+      return nextHistory.length > MAX_HISTORY
+        ? nextHistory.slice(nextHistory.length - MAX_HISTORY)
+        : nextHistory;
     });
 
     if (!replaceCurrent) {
-      setCurrentIndex((prev) => Math.min(prev + 1, 49));
+      setCurrentIndex((index) => Math.min(index + 1, MAX_HISTORY - 1));
     }
   }, [currentIndex]);
 
@@ -52,47 +43,12 @@ export function useHistory(initialProject: Project | null) {
   }, []);
 
   const undo = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  }, [currentIndex]);
+    setCurrentIndex((index) => Math.max(index - 1, 0));
+  }, []);
 
   const redo = useCallback(() => {
-    if (currentIndex < history.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  }, [currentIndex, history.length]);
-
-  const canUndo = currentIndex > 0;
-  const canRedo = currentIndex < history.length - 1;
-
-  // Keyboard shortcut listener
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput =
-        document.activeElement instanceof HTMLInputElement ||
-        document.activeElement instanceof HTMLTextAreaElement;
-
-      // Allow undo/redo even when typing, or handle appropriately
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-      if (isCtrlOrCmd && !e.altKey) {
-        if (e.key === 'z' && !e.shiftKey) {
-          if (!isInput) {
-            e.preventDefault();
-            undo();
-          }
-        } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
-          if (!isInput) {
-            e.preventDefault();
-            redo();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+    setCurrentIndex((index) => Math.min(index + 1, history.length - 1));
+  }, [history.length]);
 
   return {
     currentProject,
@@ -100,7 +56,7 @@ export function useHistory(initialProject: Project | null) {
     resetHistory,
     undo,
     redo,
-    canUndo,
-    canRedo,
+    canUndo: currentIndex > 0,
+    canRedo: currentIndex < history.length - 1,
   };
 }
