@@ -10,11 +10,10 @@ import {
   IconCheck,
   IconLoader2,
   IconShieldCheck,
-  IconBook2,
 } from '@tabler/icons-react';
-import { Project, CanvasAspectRatio, ExportFormat } from '../types';
+import { Project, ExportFormat } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
-import { isMobileDevice } from '../services/exporter';
+import { exportProjectToJson } from '../services/storage';
 
 interface TopBarProps {
   project: Project;
@@ -42,7 +41,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onReset,
   onOpenLibrary,
   onOpenMobileDrawer,
-  onOpenDesignGuidelines,
   onOpenQualityCheck,
   onExport,
   onCopyClipboard,
@@ -56,7 +54,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const currentDim = CANVAS_DIMENSIONS[project.aspectRatio] || CANVAS_DIMENSIONS['1:1'];
   const exportWidth = currentDim.width * scaleMultiplier;
-  const exportHeight = currentDim.height * scaleMultiplier;
 
   const handleCopy = async () => {
     try {
@@ -64,30 +61,22 @@ export const TopBar: React.FC<TopBarProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // handled
+      // The app-level copy handler surfaces the error.
     }
   };
 
   const handleExportClick = async (scale: 1 | 2 | 4, format: ExportFormat | 'json') => {
     setShowExportMenu(false);
     if (format === 'json') {
-      const dataStr = JSON.stringify(project, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      const exportFileDefaultName = `${project.name.replace(/\s+/g, '_')}_data.json`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-    } else {
-      await onExport(scale, format as ExportFormat);
+      exportProjectToJson(project);
+      return;
     }
+    await onExport(scale, format);
   };
 
   return (
     <header className="h-14 bg-neutral-950/95 border-b border-neutral-800 px-3 md:px-5 flex items-center justify-between z-30 select-none">
-      {/* Left: Brand, Project Name & Ratio Badge */}
-      <div className="flex items-center gap-2 md:gap-4">
-        {/* Mobile Drawer Trigger */}
+      <div className="flex items-center gap-2 md:gap-4 min-w-0">
         <button
           onClick={onOpenMobileDrawer}
           className="md:hidden p-2 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
@@ -96,28 +85,26 @@ export const TopBar: React.FC<TopBarProps> = ({
           <IconMenu2 size={20} />
         </button>
 
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-black font-black text-xs shadow-md">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-black font-black text-xs shadow-md flex-shrink-0">
             BBO
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden sm:block min-w-0">
             <h1 className="text-xs font-black text-white tracking-wide uppercase">
               BasitBiOyun Studio
             </h1>
             <p className="text-[10px] text-neutral-400 truncate max-w-[180px]">
-              {project.sharedData?.player?.name || project.name}
+              {project.name || project.sharedData?.player?.name}
             </p>
           </div>
         </div>
 
-        {/* Aspect Ratio Badge */}
         <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-bold text-neutral-300">
           <span className="text-cyan-400 font-black">{currentDim.ratio}</span>
           <span className="text-neutral-500">•</span>
           <span>{currentDim.width}×{currentDim.height}</span>
         </div>
 
-        {/* Project Library Button */}
         <button
           onClick={onOpenLibrary}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors ml-1"
@@ -128,7 +115,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Center: Undo, Redo, Reset Actions & Guidelines / QA */}
       <div className="flex items-center gap-1.5">
         <div className="flex items-center gap-1 bg-neutral-900/80 p-1 rounded-xl border border-neutral-800/80">
           <button
@@ -160,7 +146,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        {/* Design QA Pre-flight button */}
         <button
           onClick={onOpenQualityCheck}
           className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-bold text-neutral-300 hover:bg-neutral-800 hover:text-cyan-400 transition-colors"
@@ -171,9 +156,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right: Export & Copy Actions */}
       <div className="flex items-center gap-2">
-        {/* Copy to Clipboard Button */}
         <button
           onClick={handleCopy}
           disabled={isExporting}
@@ -193,7 +176,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           )}
         </button>
 
-        {/* Resolution Dropdown & Export Button Group */}
         <div className="relative">
           <div className="flex items-center rounded-lg bg-gradient-to-r from-cyan-400 to-blue-600 p-[1px] shadow-lg shadow-cyan-500/10">
             <button
@@ -211,12 +193,11 @@ export const TopBar: React.FC<TopBarProps> = ({
               ) : (
                 <>
                   <IconDownload size={16} className="text-cyan-400" />
-                  <span>Export {exportWidth}px</span>
+                  <span>{exportFormat === 'json' ? 'Export JSON' : `Export ${exportWidth}px`}</span>
                 </>
               )}
             </button>
 
-            {/* Dropdown Toggle */}
             <button
               onClick={() => setShowExportMenu((prev) => !prev)}
               disabled={isExporting}
@@ -227,7 +208,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           </div>
 
-          {/* Resolution Options Popover */}
           {showExportMenu && (
             <>
               <div
