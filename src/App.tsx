@@ -27,6 +27,10 @@ import {
   IconEdit,
 } from '@tabler/icons-react';
 
+function cloneDefaultProject(): Project {
+  return JSON.parse(JSON.stringify(DEFAULT_PROJECT)) as Project;
+}
+
 export default function App() {
   const {
     currentProject,
@@ -52,7 +56,7 @@ export default function App() {
       } catch (error) {
         console.error('Failed to load current project. Falling back to defaults.', error);
         if (!cancelled) {
-          resetHistory(DEFAULT_PROJECT);
+          resetHistory(cloneDefaultProject());
         }
       } finally {
         if (!cancelled) {
@@ -68,39 +72,41 @@ export default function App() {
     };
   }, [resetHistory]);
 
-  // UI modal states
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isDesignGuidelinesOpen, setIsDesignGuidelinesOpen] = useState(false);
   const [isQualityCheckOpen, setIsQualityCheckOpen] = useState(false);
 
-  // Export State
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Dynamic canvas dimensions
   const activeDimensions: CanvasDimensions =
     CANVAS_DIMENSIONS[currentProject.aspectRatio] || CANVAS_DIMENSIONS['1:1'];
 
-  // Zoom & Preview scaling
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
-  const cardElementRef = useRef<HTMLDivElement | null>(null);
   const exportElementRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState<number>(0.35);
   const [autoFit, setAutoFit] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
-  // Panning State
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Mouse Handlers for Panning
   const handlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0 && e.button !== 1) return;
+
+    const target = e.target as HTMLElement;
+    if (
+      e.button === 0 &&
+      target.closest('button, input, textarea, select, [data-editor-artboard]')
+    ) {
+      return;
+    }
+
     setIsPanning(true);
     setLastPanPos({ x: e.clientX, y: e.clientY });
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -122,13 +128,11 @@ export default function App() {
     }
   };
 
-  // Show Toast
   const showToast = (msg: string) => {
     setToastMessage(msg);
     window.setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Debounced auto-save. Do not write the default project before IndexedDB hydration completes.
   useEffect(() => {
     if (!isHydrated) return;
 
@@ -141,7 +145,6 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [currentProject, isHydrated]);
 
-  // Compute responsive scale for dynamic canvas dimensions inside viewport
   const updateScale = useCallback(() => {
     if (!previewAreaRef.current) return;
     const { clientWidth, clientHeight } = previewAreaRef.current;
@@ -177,7 +180,6 @@ export default function App() {
     };
   }, [updateScale]);
 
-  // Global Keyboard Shortcuts (Undo, Redo, Save)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -197,8 +199,8 @@ export default function App() {
         e.preventDefault();
         if (e.shiftKey) {
           if (canRedo) redo();
-        } else {
-          if (canUndo) undo();
+        } else if (canUndo) {
+          undo();
         }
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'y') {
         e.preventDefault();
@@ -214,51 +216,32 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [canUndo, canRedo, undo, redo, currentProject]);
 
-  // Project state updater
   const handleProjectChange = (updated: Project) => {
     pushState(updated);
   };
 
-  // Direct on-canvas dragging update
-  const handleCanvasTransform = (x: number, y: number) => {
-    const updated: Project = {
-      ...currentProject,
-      imageTransform: {
-        ...currentProject.imageTransform,
-        x,
-        y,
-      },
-    };
-    pushState(updated, true);
-  };
-
-  // Project reset
   const handleConfirmReset = () => {
-    const resetProj = {
-      ...DEFAULT_PROJECT,
-      id: currentProject.id,
-      name: currentProject.name,
-    };
+    const resetProj = cloneDefaultProject();
+    resetProj.id = currentProject.id;
+    resetProj.name = currentProject.name;
     resetHistory(resetProj);
     saveCurrentProject(resetProj).catch(console.error);
     showToast('Reset to default template');
   };
 
-  // Project switch from Library
   const handleSelectProject = (proj: Project) => {
     resetHistory(proj);
     saveCurrentProject(proj).catch(console.error);
-    showToast(`Loaded: ${proj.sharedData?.player?.name || proj.name}`);
+    showToast(`Loaded: ${proj.name || proj.sharedData?.player?.name}`);
   };
 
-  // High-Res Graphic Export
   const handleExportGraphic = async (scaleMultiplier: 1 | 2 | 4, format: ExportFormat) => {
     if (!exportElementRef.current) return;
     try {
       setIsExporting(true);
       const titleSlug = (
-        currentProject.sharedData?.player?.name ||
         currentProject.name ||
+        currentProject.sharedData?.player?.name ||
         'football_graphic'
       )
         .trim()
@@ -282,7 +265,6 @@ export default function App() {
     }
   };
 
-  // Copy to Clipboard
   const handleCopyClipboard = async () => {
     if (!exportElementRef.current) return;
     try {
@@ -290,7 +272,7 @@ export default function App() {
       setExportStatus('Copying image...');
       await copyGraphicToClipboard(exportElementRef.current, activeDimensions);
       showToast('Copied high-res card to clipboard!');
-    } catch (err: any) {
+    } catch {
       alert('Could not copy image directly. You can use the Export button to download.');
     } finally {
       setIsExporting(false);
@@ -302,7 +284,6 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-neutral-950 text-neutral-100 overflow-hidden select-none font-body">
-      {/* Top Application Bar */}
       <TopBar
         project={currentProject}
         canUndo={canUndo}
@@ -320,9 +301,7 @@ export default function App() {
         exportStatus={exportStatus}
       />
 
-      {/* Main Workspace Area (Desktop: 2 Columns / Mobile: Full Width Preview) */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* DESKTOP LEFT SIDEBAR (Controls & Customizer) */}
         <div
           className={`hidden md:flex flex-shrink-0 h-full relative transition-all duration-300 ease-in-out ${
             isSidebarOpen ? 'w-[420px] lg:w-[460px] opacity-100' : 'w-0 opacity-0 overflow-hidden'
@@ -339,7 +318,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sidebar Toggle Button */}
         <button
           onClick={() => {
             setIsSidebarOpen(!isSidebarOpen);
@@ -366,7 +344,6 @@ export default function App() {
           </svg>
         </button>
 
-        {/* RIGHT PREVIEW CANVAS STAGE */}
         <main
           ref={previewAreaRef}
           onPointerDown={handlePointerDown}
@@ -375,7 +352,6 @@ export default function App() {
           onPointerLeave={handlePointerUp}
           className={`flex-1 h-full bg-[#050608] relative overflow-hidden flex items-center justify-center p-2 md:p-6 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
         >
-          {/* Subtle Grid Pattern in background of editor workspace */}
           <div
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
@@ -386,7 +362,6 @@ export default function App() {
             }}
           />
 
-          {/* Floating Zoom Controls Bar */}
           <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-neutral-800 shadow-xl text-neutral-300 text-xs">
             <button
               onClick={() => {
@@ -426,7 +401,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* Mobile Bottom Quick Edit Button */}
           <div className="md:hidden absolute bottom-4 left-4 z-20">
             <button
               onClick={() => setIsMobileDrawerOpen(true)}
@@ -437,8 +411,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* SCALED DYNAMIC GRAPHIC ARTBOARD */}
           <div
+            data-editor-artboard
             className="relative transition-transform duration-75"
             style={{
               width: `${activeDimensions.width * finalScale}px`,
@@ -460,20 +434,14 @@ export default function App() {
                 boxShadow: '0 30px 80px -15px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)',
               }}
             >
-              <InteractiveCanvas project={currentProject} onUpdateProject={pushState} interactive={true}>
-                <ScoutingCard
-                  ref={cardElementRef}
-                  project={currentProject}
-                  onUpdateTransform={handleCanvasTransform}
-                  interactive={true}
-                />
+              <InteractiveCanvas project={currentProject} onUpdateProject={pushState} interactive>
+                <ScoutingCard project={currentProject} interactive />
               </InteractiveCanvas>
             </div>
           </div>
         </main>
       </div>
 
-      {/* MOBILE DRAWER SHEET */}
       <MobileDrawer
         isOpen={isMobileDrawerOpen}
         onClose={() => setIsMobileDrawerOpen(false)}
@@ -481,7 +449,6 @@ export default function App() {
         onChange={handleProjectChange}
       />
 
-      {/* PROJECT LIBRARY MODAL */}
       <ProjectLibraryModal
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
@@ -489,20 +456,17 @@ export default function App() {
         onSelectProject={handleSelectProject}
       />
 
-      {/* RESET CONFIRMATION MODAL */}
       <ResetConfirmModal
         isOpen={isResetOpen}
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleConfirmReset}
       />
 
-      {/* DESIGN SYSTEM REFERENCE MODAL */}
       <DesignReferenceModal
         isOpen={isDesignGuidelinesOpen}
         onClose={() => setIsDesignGuidelinesOpen(false)}
       />
 
-      {/* QUALITY PRE-FLIGHT AUDIT MODAL */}
       <QualityCheckModal
         isOpen={isQualityCheckOpen}
         onClose={() => setIsQualityCheckOpen(false)}
@@ -510,15 +474,14 @@ export default function App() {
         onProceedExport={() => handleExportGraphic(2, 'png')}
       />
 
-      {/* TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-neutral-900/95 border border-cyan-500/40 text-cyan-200 text-xs font-semibold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-150">
           {toastMessage}
         </div>
       )}
 
-      {/* Hidden Native Resolution Render for Export */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           top: '-9999px',
