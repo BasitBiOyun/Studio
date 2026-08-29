@@ -21,6 +21,7 @@ import { ProjectLibraryModal } from './components/ProjectLibraryModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { DesignReferenceModal } from './components/DesignReferenceModal';
 import { QualityCheckModal } from './components/QualityCheckModal';
+import { BatchExportManager, BatchExportManagerHandle } from './components/BatchExportManager';
 import {
   IconZoomIn,
   IconZoomOut,
@@ -87,6 +88,7 @@ export default function App() {
 
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
   const exportElementRef = useRef<HTMLDivElement | null>(null);
+  const batchExportRef = useRef<BatchExportManagerHandle | null>(null);
   const [scale, setScale] = useState<number>(0.35);
   const [autoFit, setAutoFit] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -267,6 +269,25 @@ export default function App() {
     }
   };
 
+  const handleBatchExport = async (scaleMultiplier: 1 | 2 | 4, format: ExportFormat) => {
+    if (!batchExportRef.current) return;
+    try {
+      setIsExporting(true);
+      setExportStatus('Preparing multi-ratio export...');
+      await batchExportRef.current.exportAllRatios({
+        scaleMultiplier,
+        format,
+        onProgress: (status) => setExportStatus(status),
+      });
+      showToast('Exported all 4 aspect ratios.');
+    } catch (err: any) {
+      alert(err.message || 'Batch export error');
+    } finally {
+      setIsExporting(false);
+      setExportStatus('');
+    }
+  };
+
   const handleCopyClipboard = async () => {
     if (!exportElementRef.current) return;
     try {
@@ -298,6 +319,7 @@ export default function App() {
         onOpenDesignGuidelines={() => setIsDesignGuidelinesOpen(true)}
         onOpenQualityCheck={() => setIsQualityCheckOpen(true)}
         onExport={handleExportGraphic}
+        onBatchExport={handleBatchExport}
         onCopyClipboard={handleCopyClipboard}
         isExporting={isExporting}
         exportStatus={exportStatus}
@@ -510,6 +532,8 @@ export default function App() {
           interactive={false}
         />
       </div>
+
+      <BatchExportManager ref={batchExportRef} project={currentProject} />
     </div>
   );
 }
