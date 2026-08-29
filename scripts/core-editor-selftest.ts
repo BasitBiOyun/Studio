@@ -11,6 +11,7 @@ const app = read('src/App.tsx');
 const canvas = read('src/components/InteractiveCanvas.tsx');
 const card = read('src/components/ScoutingCard.tsx');
 const playerPhoto = read('src/components/design/PlayerPhotoLayer.tsx');
+const logosLayer = read('src/components/design/LogosLayer.tsx');
 const projectLibrary = read('src/components/ProjectLibraryModal.tsx');
 const storage = read('src/services/storage.ts');
 const exporter = read('src/services/exporter.ts');
@@ -49,8 +50,8 @@ assert.ok(
   'Broken user images must never silently fall back to a different real player.',
 );
 assert.ok(
-  playerPhoto.includes("style.display = 'none'"),
-  'Broken player visuals should fail safely without replacing the subject.',
+  playerPhoto.includes("style.display = 'none'") && logosLayer.includes("style.display = 'none'"),
+  'Broken player and logo visuals should fail safely without replacing the subject.',
 );
 
 assert.ok(
@@ -93,6 +94,39 @@ assert.ok(
   sidebar.includes("await import('browser-image-compression')") && sidebar.includes("await import('node-vibrant/browser')"),
   'Optional image tooling must stay lazy-loaded and browser-safe.',
 );
+
+function collectTsxFiles(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) return collectTsxFiles(fullPath);
+    return entry.isFile() && entry.name.endsWith('.tsx') ? [fullPath] : [];
+  });
+}
+
+for (const filePath of collectTsxFiles(path.join(root, 'src'))) {
+  const source = fs.readFileSync(filePath, 'utf8');
+  const importedIcons = new Set<string>();
+  const importPattern = /import\s*\{([\s\S]*?)\}\s*from\s*['"]@tabler\/icons-react['"]/g;
+  let importMatch: RegExpExecArray | null;
+  while ((importMatch = importPattern.exec(source))) {
+    for (const rawName of importMatch[1].split(',')) {
+      const name = rawName.trim().split(/\s+as\s+/)[1] || rawName.trim().split(/\s+as\s+/)[0];
+      if (name) importedIcons.add(name.trim());
+    }
+  }
+
+  const usedIcons = new Set(
+    Array.from(source.matchAll(/<\s*(Icon[A-Z][A-Za-z0-9_]*)\b/g), (match) => match[1])
+      .filter((name) => name !== 'IconComponent')
+  );
+
+  for (const icon of usedIcons) {
+    assert.ok(
+      importedIcons.has(icon),
+      `${path.relative(root, filePath)} renders ${icon} without importing it from @tabler/icons-react.`,
+    );
+  }
+}
 
 const matchResultProject = JSON.parse(JSON.stringify(DEFAULT_PROJECT));
 matchResultProject.templateType = 'match-result';
@@ -142,4 +176,4 @@ for (const template of expectedTemplateCases) {
   assert.ok(card.includes(`case '${template}'`) || template === 'scouting-report', `Renderer missing template: ${template}`);
 }
 
-console.log('Core editor self-test passed: project storage, Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
+console.log('Core editor self-test passed: project storage, Visuals runtime, direct editing, icon imports, QA and SnapDOM export safeguards.');
