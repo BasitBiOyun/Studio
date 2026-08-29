@@ -75,12 +75,13 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="h-14 bg-neutral-950/95 border-b border-neutral-800 px-3 md:px-5 flex items-center justify-between z-30 select-none">
-      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+    <header className="h-14 shrink-0 bg-neutral-950/95 border-b border-neutral-800 px-2 sm:px-3 lg:px-5 flex items-center justify-between gap-1.5 sm:gap-2 z-30 select-none min-w-0">
+      <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink-0">
         <button
           onClick={onOpenMobileDrawer}
-          className="md:hidden p-2 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
+          className="lg:hidden p-2 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white min-w-10 min-h-10 flex items-center justify-center"
           title="Open Editor Controls"
+          aria-label="Open editor controls"
         >
           <IconMenu2 size={20} />
         </button>
@@ -89,7 +90,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-black font-black text-xs shadow-md flex-shrink-0">
             BBO
           </div>
-          <div className="hidden sm:block min-w-0">
+          <div className="hidden md:block min-w-0">
             <h1 className="text-xs font-black text-white tracking-wide uppercase">
               BasitBiOyun Studio
             </h1>
@@ -99,7 +100,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-bold text-neutral-300">
+        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-bold text-neutral-300">
           <span className="text-cyan-400 font-black">{currentDim.ratio}</span>
           <span className="text-neutral-500">•</span>
           <span>{currentDim.width}×{currentDim.height}</span>
@@ -107,21 +108,22 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenLibrary}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors ml-1"
+          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors ml-1"
           title="Projects Library"
         >
           <IconFolder size={15} className="text-cyan-400" />
-          <span className="hidden sm:inline">Projects</span>
+          <span>Projects</span>
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1 bg-neutral-900/80 p-1 rounded-xl border border-neutral-800/80">
+      <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-neutral-900/80 p-1 rounded-xl border border-neutral-800/80">
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-transparent transition-all min-w-8 min-h-8 flex items-center justify-center"
             title="Undo (Ctrl+Z)"
+            aria-label="Undo"
           >
             <IconArrowBackUp size={18} />
           </button>
@@ -129,18 +131,20 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-transparent transition-all min-w-8 min-h-8 flex items-center justify-center"
             title="Redo (Ctrl+Shift+Z)"
+            aria-label="Redo"
           >
             <IconArrowForwardUp size={18} />
           </button>
 
-          <div className="w-[1px] h-4 bg-neutral-800 mx-0.5" />
+          <div className="hidden sm:block w-[1px] h-4 bg-neutral-800 mx-0.5" />
 
           <button
             onClick={onReset}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-all"
+            className="hidden sm:flex p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-all min-w-8 min-h-8 items-center justify-center"
             title="Reset to Default"
+            aria-label="Reset to default"
           >
             <IconRotate2 size={18} />
           </button>
@@ -148,7 +152,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenQualityCheck}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-bold text-neutral-300 hover:bg-neutral-800 hover:text-cyan-400 transition-colors"
+          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-bold text-neutral-300 hover:bg-neutral-800 hover:text-cyan-400 transition-colors"
           title="Pre-Flight Quality Audit"
         >
           <IconShieldCheck size={16} className="text-cyan-400" />
@@ -156,11 +160,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={handleCopy}
           disabled={isExporting}
-          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+          className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
           title="Copy Image to Clipboard"
         >
           {copied ? (
@@ -181,19 +185,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             <button
               onClick={() => handleExportClick(scaleMultiplier, exportFormat)}
               disabled={isExporting}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-950 hover:bg-neutral-900 rounded-l-[7px] text-xs font-bold text-white transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-neutral-950 hover:bg-neutral-900 rounded-l-[7px] text-xs font-bold text-white transition-colors disabled:opacity-50 min-h-9"
+              aria-label={exportFormat === 'json' ? 'Export JSON' : `Export ${exportWidth}px image`}
             >
               {isExporting ? (
                 <>
                   <IconLoader2 size={16} className="animate-spin text-cyan-400" />
-                  <span className="truncate max-w-[120px]">
+                  <span className="hidden sm:inline truncate max-w-[120px]">
                     {exportStatus || 'Exporting...'}
                   </span>
                 </>
               ) : (
                 <>
                   <IconDownload size={16} className="text-cyan-400" />
-                  <span>{exportFormat === 'json' ? 'Export JSON' : `Export ${exportWidth}px`}</span>
+                  <span className="hidden sm:inline">{exportFormat === 'json' ? 'Export JSON' : `Export ${exportWidth}px`}</span>
                 </>
               )}
             </button>
@@ -201,8 +206,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             <button
               onClick={() => setShowExportMenu((prev) => !prev)}
               disabled={isExporting}
-              className="px-2 py-1.5 bg-neutral-950 hover:bg-neutral-900 rounded-r-[7px] border-l border-neutral-800 text-neutral-300 hover:text-white text-xs"
+              className="px-2 py-1.5 bg-neutral-950 hover:bg-neutral-900 rounded-r-[7px] border-l border-neutral-800 text-neutral-300 hover:text-white text-xs min-h-9 min-w-8"
               title="Change Resolution & Format"
+              aria-label="Change export settings"
             >
               ▼
             </button>
@@ -214,7 +220,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setShowExportMenu(false)}
               />
-              <div className="absolute right-0 mt-1.5 w-60 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-2 z-50 space-y-2">
+              <div className="absolute right-0 mt-1.5 w-[min(15rem,calc(100vw-1rem))] bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-2 z-50 space-y-2">
                 <div className="px-2">
                   <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
                     Export Format
@@ -224,7 +230,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       <button
                         key={fmt}
                         onClick={() => setExportFormat(fmt)}
-                        className={`py-1 rounded text-xs font-bold uppercase ${
+                        className={`py-1.5 rounded text-xs font-bold uppercase min-h-9 ${
                           exportFormat === fmt
                             ? 'bg-cyan-500 text-black'
                             : 'bg-neutral-800 text-neutral-400 hover:text-white'
@@ -297,7 +303,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="pt-2">
                   <button
                     onClick={() => handleExportClick(scaleMultiplier, exportFormat)}
-                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-[11px] py-2 rounded-lg shadow-md transition-colors"
+                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-[11px] py-2 rounded-lg shadow-md transition-colors min-h-10"
                   >
                     Confirm Export
                   </button>
