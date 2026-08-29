@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "test:data-layer": "tsx scripts/data-layer-selftest.ts && tsx scripts/data-migration-selftest.ts",
-    "build": "npm run test:data-layer && vite build",
+    "test:templates": "tsx scripts/template-selftest.ts",
+    "build": "npm run test:data-layer && npm run test:templates && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
