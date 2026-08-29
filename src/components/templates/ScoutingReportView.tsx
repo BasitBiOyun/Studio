@@ -20,34 +20,39 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
 
   const metaBadges = [
     { label: 'Nat', value: player.countryFlag ? <span className="flex items-center gap-1.5"><span className={`fi fi-${player.countryFlag.toLowerCase()} text-[1.1em] drop-shadow-sm`}></span>{player.nationality}</span> : player.nationality },
-    { label: 'Pos', value: player.positions },
     { label: 'Age', value: player.age },
     { label: 'Foot', value: player.preferredFoot },
     { label: 'Height', value: player.height },
   ];
 
-  // Make text columns wider to give breathing room
+  const dataContext = (templateContent as any).dataProvenance?.context || {};
+  const firstStatProvenance = stats.find((stat) => stat.provenance)?.provenance;
+  const season = dataContext.season || firstStatProvenance?.season;
+  const competition = dataContext.competition || dataContext.league || firstStatProvenance?.competition;
+  const sample = dataContext.minutes != null
+    ? `${dataContext.minutes} MINUTES`
+    : firstStatProvenance?.sampleSize;
+  const contextLine = [season, competition, sample].filter(Boolean).join(' • ');
+
+  const subtitle = [player.club, player.positions].filter(Boolean).join(' • ');
+
+  // Keep the established visual composition: analytical content left, player cutout right.
   const leftColSpan = 'col-span-8';
   const rightColSpan = 'col-span-4';
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-6' : 'p-10 md:p-12'} select-none`}>
-      {/* Top Header */}
       <EditorialHeader
-        title={player?.name || ""}
-        subtitle={player.positions}
+        title={player?.name || ''}
+        subtitle={subtitle}
         metaBadges={metaBadges}
         theme={theme}
         fontDisplay={fontDisplay}
         visualMode={visualMode}
       />
 
-      {/* Main Center Area: Left Data Panels + Right Open Space for Player Photo */}
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-3 my-2' : 'gap-6 my-4'} items-center`}>
-        {/* Left Column: Stats & Analytical Insights */}
         <div className={`${leftColSpan} flex flex-col ${isWide ? 'gap-3' : 'gap-4'}`}>
-          
-          {/* Tactical Profile Notes */}
           {advancedLayout.visibleBlocks.tacticalProfile !== false && profile.tacticalProfile && (
             <div
               className={`rounded-2xl ${isWide ? 'p-4' : 'p-5'} border backdrop-blur-md shadow-xl`}
@@ -59,7 +64,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
               <div className="flex items-center gap-1.5 mb-2">
                 <IconCompass size={isWide ? 15 : 18} style={{ color: theme.primaryAccent }} />
                 <span className={`${isWide ? 'text-[11px]' : 'text-[13px]'} font-black tracking-widest uppercase text-neutral-300`}>
-                  Tactical Profile & Role Dynamics
+                  Role & Tactical Profile
                 </span>
               </div>
               <p className={`${isWide ? 'text-[12px]' : 'text-[14px]'} text-neutral-200 leading-relaxed`}>
@@ -68,21 +73,26 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
             </div>
           )}
 
-          {/* 4 Performance Metrics Grid */}
           {advancedLayout.visibleBlocks.stats !== false && (
-            <div className="grid grid-cols-2 gap-3">
-              {stats.slice(0, 4).map((st) => (
-                <EditorialStatCard
-                  key={st.id}
-                  stat={st}
-                  theme={theme}
-                  fontDisplay={fontDisplay}
-                />
-              ))}
+            <div className="space-y-2">
+              {contextLine && (
+                <div className="px-1 text-[11px] font-black uppercase tracking-[0.16em] text-neutral-400">
+                  {contextLine}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                {stats.slice(0, 4).map((st) => (
+                  <EditorialStatCard
+                    key={st.id}
+                    stat={st}
+                    theme={theme}
+                    fontDisplay={fontDisplay}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Strengths & Development Split Card */}
           {(advancedLayout.visibleBlocks.strengths !== false ||
             advancedLayout.visibleBlocks.development !== false) && (
             <div
@@ -92,7 +102,6 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                 borderColor: 'rgba(255, 255, 255, 0.12)',
               }}
             >
-              {/* Strengths */}
               {advancedLayout.visibleBlocks.strengths !== false && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-3 pb-1 border-b border-emerald-500/20">
@@ -102,7 +111,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                     </span>
                   </div>
                   <ul className="flex flex-col gap-2">
-                    {strengths.map((s, idx) => (
+                    {strengths.slice(0, 4).map((s, idx) => (
                       <li key={idx} className={`flex items-start gap-2 ${isWide ? 'text-[12px]' : 'text-[14px]'} text-neutral-100 font-semibold leading-relaxed`}>
                         <span
                           className="w-1.5 h-1.5 rounded-sm mt-1.5 flex-shrink-0 rotate-45 shadow-sm"
@@ -115,7 +124,6 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                 </div>
               )}
 
-              {/* Development Areas */}
               {advancedLayout.visibleBlocks.development !== false && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-3 pb-1 border-b border-amber-500/20">
@@ -125,7 +133,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                     </span>
                   </div>
                   <ul className="flex flex-col gap-2">
-                    {development.map((d, idx) => (
+                    {development.slice(0, 3).map((d, idx) => (
                       <li key={idx} className={`flex items-start gap-2 ${isWide ? 'text-[12px]' : 'text-[14px]'} text-neutral-200 font-semibold leading-relaxed`}>
                         <span className="w-1.5 h-1.5 rounded-sm bg-amber-400 mt-1.5 flex-shrink-0 rotate-45 shadow-sm" />
                         <span>{d}</span>
@@ -137,7 +145,6 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
             </div>
           )}
 
-          {/* Summary Callout Card with Left Accent Blade */}
           {advancedLayout.visibleBlocks.summary !== false && (
             <div
               className={`rounded-2xl ${isWide ? 'p-4' : 'p-5'} border backdrop-blur-md relative overflow-hidden shadow-2xl`}
@@ -162,7 +169,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                   className={`${isWide ? 'text-[11px]' : 'text-[13px]'} font-black tracking-widest uppercase`}
                   style={{ color: theme.primaryAccent }}
                 >
-                  Executive Summary
+                  Scout Verdict
                 </span>
               </div>
               <p className={`${isWide ? 'text-[14px]' : 'text-[16px]'} text-white font-medium leading-relaxed drop-shadow-sm`}>
@@ -172,11 +179,9 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
           )}
         </div>
 
-        {/* Right side is intentionally open for the Player Cutout Photo */}
         <div className={`${rightColSpan} h-full pointer-events-none`} />
       </div>
 
-      {/* Footer */}
       {advancedLayout.visibleBlocks.footer !== false && (
         <EditorialFooter credits={credits} theme={theme} visualMode={visualMode} />
       )}
