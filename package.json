@@ -9,8 +9,9 @@
     "test:data-layer": "tsx scripts/data-layer-selftest.ts && tsx scripts/data-migration-selftest.ts",
     "test:templates": "tsx scripts/template-selftest.ts && tsx scripts/thread-cover-selftest.ts && tsx scripts/match-result-selftest.ts && tsx scripts/team-profile-selftest.ts",
     "test:sidebar": "tsx scripts/sidebar-runtime-selftest.ts",
+    "test:core": "tsx scripts/core-editor-selftest.ts",
     "prebuild": "node scripts/repair-editor-sidebar.cjs",
-    "build": "npm run test:sidebar && npm run test:data-layer && npm run test:templates && vite build",
+    "build": "npm run test:sidebar && npm run test:data-layer && npm run test:templates && npm run test:core && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
