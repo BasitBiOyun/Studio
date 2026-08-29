@@ -30,7 +30,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
 
   useEffect(() => {
     setTargets([]);
-  }, [activeTemplateKey]);
+  }, [activeTemplateKey, activeTemplate?.layout?.locked]);
 
   useEffect(() => {
     if (!interactive) return;
@@ -153,7 +153,12 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     updateProjectFromTarget(e.target);
   };
 
-  const toolsReady = Boolean(interactive && MoveableComponent && SelectoComponent);
+  const toolsReady = Boolean(
+    interactive &&
+    !activeTemplate.layout?.locked &&
+    MoveableComponent &&
+    SelectoComponent
+  );
   const selectionHasLogo = targets.some((target) =>
     (target as HTMLElement).getAttribute?.('data-moveable-id')?.startsWith('logo-')
   );
