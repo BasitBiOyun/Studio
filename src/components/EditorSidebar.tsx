@@ -42,6 +42,7 @@ import {
 import { ICON_OPTIONS, StatIcon } from './StatIcon';
 import { TemplateForms } from './TemplateForms';
 import { ClubLogoSelector } from './ClubLogoSelector';
+import { ImageCropModal } from './ImageCropModal';
 
 interface EditorSidebarProps {
   project: Project;
@@ -62,6 +63,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<MainTab>('data');
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('All');
+  const [cropState, setCropState] = useState<{ src: string; type: 'primary' | 'secondary' | number } | null>(null);
   const [inspectedStats, setInspectedStats] = useState<Record<string, boolean>>({});
   const toggleInspect = (id: string) => setInspectedStats(prev => ({...prev, [id]: !prev[id]}));
   const playerPackInputRef = React.useRef<HTMLInputElement>(null);
@@ -159,7 +161,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
+        const { default: imageCompression } = await import('browser-image-compression');
+        const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
         const reader = new FileReader();
         reader.onload = (event) => {
           const result = event.target?.result as string;
@@ -168,6 +171,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
         reader.readAsDataURL(compressedFile);
       } catch (err) {
         console.error(err);
+        window.alert('Image processing failed. The existing visual was kept.');
       }
     }
   };
@@ -176,7 +180,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 800 });
+        const { default: imageCompression } = await import('browser-image-compression');
+        const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 800, useWebWorker: true });
         const reader = new FileReader();
         reader.onload = (event) => {
           const result = event.target?.result as string;
@@ -186,6 +191,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
         reader.readAsDataURL(compressedFile);
       } catch (err) {
         console.error(err);
+        window.alert('Image processing failed. The existing visual was kept.');
       }
     }
   };
@@ -199,33 +205,37 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
       updateVisuals({ secondaryPlayerImageSrc: croppedDataUrl });
     } else if (typeof cropState.type === 'number') {
       const newLogos = [...activeTemplate.visuals.logos];
-      newLogos[cropState.type].src = croppedDataUrl;
-      newLogos[cropState.type].visible = true;
-      updateVisuals({ logos: newLogos });
+      const targetLogo = newLogos[cropState.type];
+      if (targetLogo) {
+        targetLogo.src = croppedDataUrl;
+        targetLogo.visible = true;
+        updateVisuals({ logos: newLogos });
+      }
     }
     setCropState(null);
   };
   
   const extractThemeFromImage = async (src: string) => {
+    if (!src) return;
+
     try {
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.src = src;
-      img.onload = async () => {
-        const v = new Vibrant(img);
-        const palette = await v.getPalette();
-        const primary = palette.Vibrant?.hex || '#ffffff';
-        const secondary = palette.LightVibrant?.hex || '#aaaaaa';
-        const bg1 = palette.DarkMuted?.hex || '#000000';
-        updateTheme({
-          primaryAccent: primary,
-          secondaryAccent: secondary,
-          bg1: bg1,
-          bg2: '#111111'
-        });
-      };
-    } catch(e) {
-      console.error(e);
+      const { Vibrant } = await import('node-vibrant/browser');
+      const palette = await Vibrant.from(src).getPalette();
+      const primary = palette.Vibrant?.hex || theme.primaryAccent;
+      const secondary = palette.LightVibrant?.hex || palette.Muted?.hex || theme.secondaryAccent;
+      const bg1 = palette.DarkMuted?.hex || palette.DarkVibrant?.hex || theme.bg1;
+
+      if (!window.confirm('Apply the generated palette to this template?')) return;
+
+      updateTheme({
+        ...theme,
+        primaryAccent: primary,
+        secondaryAccent: secondary,
+        bg1,
+      });
+    } catch (error) {
+      console.error('Theme extraction failed', error);
+      window.alert('Could not generate a theme from this image. The current theme was kept.');
     }
   };
 
@@ -1163,7 +1173,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   onClick={() => extractThemeFromImage(playerImageSrc)}
                   className="w-full mt-2 py-2 px-3 bg-fuchsia-950/40 hover:bg-fuchsia-900/60 text-fuchsia-400 border border-fuchsia-800/50 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2"
                 >
-                  <IconWand size={14} />
+                  <IconSparkles size={14} />
                   Generate Theme from Image
                 </button>
               )}
