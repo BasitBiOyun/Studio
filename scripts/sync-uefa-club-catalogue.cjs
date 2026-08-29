@@ -54,7 +54,7 @@ const ASSOCIATIONS = [
   ['Norway', 'Eliteserien', 'norway'],
   ['Poland', 'Ekstraklasa', 'poland'],
   ['Portugal', 'Primeira Liga', 'portugal'],
-  ['Republic of Ireland', 'League of Ireland Premier Division', 'ireland'],
+  ['Republic of Ireland', 'League of Ireland Premier Division', 'republic-of-ireland'],
   ['Romania', 'Liga I', 'romania'],
   ['Russia', 'Russian Premier League', 'russia'],
   ['San Marino', 'Campionato Sammarinese di Calcio', 'san-marino'],
@@ -108,7 +108,11 @@ function encodePath(rawPath) {
   return String(rawPath).split('/').map((segment) => encodeURIComponent(segment)).join('/');
 }
 
-function requestJson(url, attempts = 3) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function requestJson(url, attempts = 4) {
   return new Promise((resolve, reject) => {
     const run = (attempt) => {
       const req = https.get(url, {
@@ -116,7 +120,7 @@ function requestJson(url, attempts = 3) {
           Accept: 'application/json',
           'User-Agent': USER_AGENT,
         },
-        timeout: 20000,
+        timeout: 25000,
       }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume();
@@ -129,7 +133,13 @@ function requestJson(url, attempts = 3) {
         res.on('end', () => {
           if (res.statusCode < 200 || res.statusCode >= 300) {
             if (attempt < attempts) {
-              setTimeout(() => run(attempt + 1), 600 * attempt);
+              const retryAfter = Number.parseInt(String(res.headers['retry-after'] || ''), 10);
+              const retryDelay = Number.isFinite(retryAfter)
+                ? Math.max(1500, retryAfter * 1000)
+                : res.statusCode === 429
+                  ? 4000 * attempt
+                  : 900 * attempt;
+              setTimeout(() => run(attempt + 1), retryDelay);
               return;
             }
             reject(new Error(`HTTP ${res.statusCode} for ${url}: ${body.slice(0, 180)}`));
@@ -145,7 +155,7 @@ function requestJson(url, attempts = 3) {
       req.on('timeout', () => req.destroy(new Error(`Timeout for ${url}`)));
       req.on('error', (error) => {
         if (attempt < attempts) {
-          setTimeout(() => run(attempt + 1), 600 * attempt);
+          setTimeout(() => run(attempt + 1), 900 * attempt);
           return;
         }
         reject(error);
@@ -261,7 +271,7 @@ function leagueCandidateScore(candidate, searchTerm) {
 
 async function resolveLeagueEntity(association) {
   const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=10&search=${encodeURIComponent(association.leagueSearch)}`;
-  const json = await requestJson(url, 2);
+  const json = await requestJson(url, 4);
   const candidates = Array.isArray(json.search) ? json.search : [];
   const ranked = candidates
     .map((candidate) => ({ candidate, score: leagueCandidateScore(candidate, association.leagueSearch) }))
@@ -285,7 +295,9 @@ async function resolveRemainingLeagues(associations) {
     } catch (error) {
       console.warn(`[clubs] Wikidata league search failed: ${association.name}: ${error.message}`);
     }
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    // Wikimedia asks automated clients to be conservative. One request roughly every 1.3s
+    // avoids the 429 burst that the old 80ms loop produced in CI.
+    await sleep(1300);
   }
   return resolved;
 }
@@ -303,7 +315,7 @@ SELECT DISTINCT ?club ?clubLabel ?league ?logo WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }`;
   const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
-  const json = await requestJson(url, 3);
+  const json = await requestJson(url, 4);
   const bindings = json?.results?.bindings;
   if (!Array.isArray(bindings)) throw new Error('Wikidata club query returned no bindings array.');
   return bindings.map((binding) => ({
