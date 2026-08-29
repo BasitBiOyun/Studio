@@ -1,0 +1,37 @@
+name: Studio CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'src/data/clubs_catalogue.json'
+      - 'src/data/clubs_catalogue_meta.json'
+      - 'public/clubs_catalogue.json'
+      - 'public/clubs_catalogue_meta.json'
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: studio-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Build and run self-tests
+        run: npm run build
