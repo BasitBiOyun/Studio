@@ -23,7 +23,6 @@ export const QualityCheckModal: React.FC<QualityCheckModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none">
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-950/60">
           <div className="flex items-center gap-3">
             <div
@@ -54,7 +53,6 @@ export const QualityCheckModal: React.FC<QualityCheckModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh] space-y-3">
           {result.issues.length === 0 ? (
             <div className="text-center py-6">
@@ -62,10 +60,10 @@ export const QualityCheckModal: React.FC<QualityCheckModalProps> = ({
                 <IconCheck size={24} />
               </div>
               <h3 className="text-sm font-bold text-white uppercase">
-                Pristine Design Quality
+                Core Checks Passed
               </h3>
               <p className="text-xs text-neutral-400 mt-1">
-                All typography scales, aspect ratios, contrast values, and image layers passed verification.
+                Required template content, primary contrast, key metrics and required player visuals passed the current pre-flight checks.
               </p>
             </div>
           ) : (
@@ -104,7 +102,6 @@ export const QualityCheckModal: React.FC<QualityCheckModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-3.5 border-t border-neutral-800 bg-neutral-950/60 flex items-center justify-between">
           <button
             onClick={onClose}
