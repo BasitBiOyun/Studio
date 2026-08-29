@@ -24,6 +24,12 @@ import {
   visibleMatchAnalysisStats,
   visibleMatchAnalysisTakeaways,
 } from '../src/services/matchAnalysis';
+import {
+  tacticalDeepDiveLabel,
+  tacticalTopicFontSize,
+  visibleExecutionTriggers,
+  visibleTacticalPrinciples,
+} from '../src/services/tacticalAnalysis';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -144,4 +150,38 @@ assert.notEqual(
   'Long Match Analysis scorelines should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis content rules.');
+assert.deepEqual(
+  visibleTacticalPrinciples([
+    { title: ' Build-up ', description: ' Create a 3-2 base ' },
+    { title: '', description: '' },
+    { title: 'Width', description: 'Pin the full-back' },
+    { title: 'Rest defence', description: 'Keep three behind the ball' },
+    { title: 'Extra', description: 'Should not render' },
+  ]),
+  [
+    { title: 'Build-up', description: 'Create a 3-2 base' },
+    { title: 'Width', description: 'Pin the full-back' },
+    { title: 'Rest defence', description: 'Keep three behind the ball' },
+  ],
+  'Tactical Analysis should keep only three meaningful core principles.',
+);
+assert.deepEqual(
+  visibleExecutionTriggers([' Press on back pass ', '', 'Jump on poor first touch', 'Lock the touchline', 'Extra trigger']),
+  ['Press on back pass', 'Jump on poor first touch', 'Lock the touchline'],
+  'Tactical Analysis should keep only three meaningful execution triggers.',
+);
+assert.equal(
+  tacticalDeepDiveLabel('In Possession'),
+  'TACTICAL DEEP DIVE • IN POSSESSION',
+);
+assert.equal(
+  tacticalDeepDiveLabel(''),
+  'TACTICAL DEEP DIVE',
+);
+assert.notEqual(
+  tacticalTopicFontSize('HIGH PRESS', false),
+  tacticalTopicFontSize('HOW THE LEFT-SIDED OVERLOAD CREATES CENTRAL ACCESS', false),
+  'Long Tactical Analysis topics should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview + Match Analysis + Tactical Analysis content rules.');
