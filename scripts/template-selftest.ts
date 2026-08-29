@@ -9,6 +9,13 @@ import {
   transferHeadlineFontSize,
   visibleTransferConditions,
 } from '../src/services/transfer';
+import {
+  matchPreviewTitleFontSize,
+  resolveMatchTiming,
+  tacticalDecidersLabel,
+  visibleMatchForm,
+  visibleTacticalKeys,
+} from '../src/services/matchPreview';
 
 assert.equal(
   getMetricWinner({ id: 'higher', label: 'Shots', val1: '3.2', val2: '2.8', higherIsBetter: true }),
@@ -60,4 +67,32 @@ assert.notEqual(
   'Long transfer headlines should scale down rather than overflow.',
 );
 
-console.log('Template self-test passed: Player Comparison + Transfer Graphic content rules.');
+assert.deepEqual(
+  visibleMatchForm(['W', 'd', ' L ', 'W', 'D', 'L', 'W']),
+  ['W', 'D', 'L', 'W', 'D'],
+  'Match Preview should display at most the latest five supplied form results.',
+);
+assert.deepEqual(
+  visibleTacticalKeys([' Press the first pass ', '', 'Attack the far post', 'Protect rest defence', 'Extra point']),
+  ['Press the first pass', 'Attack the far post', 'Protect rest defence'],
+  'Match Preview should keep only three meaningful tactical deciders.',
+);
+assert.equal(tacticalDecidersLabel(1), '1 KEY TACTICAL DECIDER');
+assert.equal(tacticalDecidersLabel(3), '3 KEY TACTICAL DECIDERS');
+assert.deepEqual(
+  resolveMatchTiming('21:45 CET • RAMS PARK'),
+  { kickoffTime: '21:45 CET', venue: 'RAMS PARK' },
+  'Legacy combined kickoff/venue input should be separated for display.',
+);
+assert.deepEqual(
+  resolveMatchTiming('21:45 CET', 'ŞÜKRÜ SARACOĞLU STADIUM'),
+  { kickoffTime: '21:45 CET', venue: 'ŞÜKRÜ SARACOĞLU STADIUM' },
+  'Explicit venue data should take precedence when supplied by JSON.',
+);
+assert.notEqual(
+  matchPreviewTitleFontSize('FENERBAHÇE', 'LIVERPOOL', false),
+  matchPreviewTitleFontSize('BORUSSIA MÖNCHENGLADBACH', 'PARIS SAINT-GERMAIN', false),
+  'Long Match Preview team names should scale down rather than overflow.',
+);
+
+console.log('Template self-test passed: Player Comparison + Transfer Graphic + Match Preview content rules.');
