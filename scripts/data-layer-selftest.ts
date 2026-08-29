@@ -8,6 +8,10 @@ import {
   fetchNormalizedPlayerPack,
   StaticPlayerDataProvider,
 } from '../src/services/playerDataProviders';
+import {
+  createPlayerAutofillPreview,
+  confirmPlayerAutofill,
+} from '../src/services/playerAutofill';
 
 function freshProject() {
   return JSON.parse(JSON.stringify(DEFAULT_PROJECT));
@@ -128,6 +132,14 @@ assert.equal(searchResults.length, 1, 'Provider search should return the curated
 assert.equal(searchResults[0].providerId, 'selftest');
 const normalizedProviderPack = await fetchNormalizedPlayerPack('selftest', 'can-uzun');
 assert.equal(normalizedProviderPack.player.name, 'Can Uzun');
+
+const preview = await createPlayerAutofillPreview('selftest', 'can-uzun', searchResults[0]);
+assert.equal(preview.changes.playerName, 'Can Uzun');
+assert.equal(preview.changes.statsCount, 2);
+const beforeConfirm = freshProject();
+assert.notEqual(beforeConfirm.sharedData.player.name, 'Can Uzun', 'Preview must not mutate project state.');
+const confirmed = confirmPlayerAutofill(beforeConfirm, preview);
+assert.equal(confirmed.sharedData.player.name, 'Can Uzun', 'Confirmation should apply the normalized pack.');
 unregisterPlayerDataProvider('selftest');
 
-console.log(`Data layer self-test passed: Player Pack + ${studioPacks.length} Studio Pack templates + provider pipeline.`);
+console.log(`Data layer self-test passed: Player Pack + ${studioPacks.length} Studio Pack templates + provider search/fetch/normalize + preview/confirm.`);
