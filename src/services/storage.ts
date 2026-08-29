@@ -1,12 +1,13 @@
 import { ProjectSchema } from './schema';
 import { Project, BrandSettings, DesignReferenceItem, TemplateType } from '../types';
 import { DEFAULT_PROJECT, DEFAULT_BRAND_SETTINGS, INITIAL_DESIGN_REFERENCES } from '../constants/presets';
-import { db } from './db';
+import { db, ProjectVersionRecord } from './db';
 
 const STORAGE_KEY_CURRENT = 'bbo_current_project';
 const STORAGE_KEY_LIST = 'bbo_projects_library';
 const STORAGE_KEY_BRAND = 'bbo_brand_settings';
 const STORAGE_KEY_REFERENCES = 'bbo_design_references';
+const MAX_PROJECT_VERSIONS = 10;
 
 const TEMPLATE_TYPES = Object.keys(DEFAULT_PROJECT.templates) as TemplateType[];
 
@@ -54,6 +55,53 @@ export function migrateProject(input: any): Project {
   migrated.updatedAt = Number(input.updatedAt) || migrated.updatedAt || Date.now();
 
   return migrated;
+}
+
+function projectFingerprint(project: Project): string {
+  const normalized = migrateProject(project);
+  return JSON.stringify({
+    ...normalized,
+    updatedAt: 0,
+  });
+}
+
+async function pruneProjectVersions(projectId: string): Promise<void> {
+  const versions = await db.projectVersions
+    .where('projectId')
+    .equals(projectId)
+    .sortBy('createdAt');
+
+  if (versions.length <= MAX_PROJECT_VERSIONS) return;
+
+  const removeIds = versions
+    .slice(0, versions.length - MAX_PROJECT_VERSIONS)
+    .map((version) => version.id);
+
+  await db.projectVersions.bulkDelete(removeIds);
+}
+
+async function snapshotProjectIfNeeded(project: Project): Promise<void> {
+  const fingerprint = projectFingerprint(project);
+  const latest = await db.projectVersions
+    .where('projectId')
+    .equals(project.id)
+    .reverse()
+    .sortBy('createdAt')
+    .then((versions) => versions[0]);
+
+  if (latest?.fingerprint === fingerprint) return;
+
+  const now = Date.now();
+  const record: ProjectVersionRecord = {
+    id: `${project.id}:${now}:${Math.random().toString(36).slice(2, 8)}`,
+    projectId: project.id,
+    createdAt: now,
+    fingerprint,
+    project: clone(project),
+  };
+
+  await db.projectVersions.put(record);
+  await pruneProjectVersions(project.id);
 }
 
 let migratedFromLocalStorage = false;
@@ -126,9 +174,54 @@ export async function loadCurrentProject(): Promise<Project> {
 
 export async function saveCurrentProject(project: Project): Promise<void> {
   await ensureMigrated();
-  const updated = migrateProject({ ...project, updatedAt: Date.now() });
+
+  const existing = await db.projects.get(project.id);
+  const incoming = migrateProject(project);
+
+  if (existing) {
+    const migratedExisting = migrateProject(existing);
+    if (projectFingerprint(migratedExisting) !== projectFingerprint(incoming)) {
+      await snapshotProjectIfNeeded(migratedExisting);
+    }
+  }
+
+  const updated = migrateProject({ ...incoming, updatedAt: Date.now() });
   await db.projects.put(updated);
   await db.settings.put({ id: 'current_project_id', data: updated.id });
+}
+
+export async function listProjectVersions(projectId: string): Promise<ProjectVersionRecord[]> {
+  await ensureMigrated();
+  const versions = await db.projectVersions
+    .where('projectId')
+    .equals(projectId)
+    .sortBy('createdAt');
+
+  return versions.reverse().map((version) => ({
+    ...version,
+    project: migrateProject(version.project),
+  }));
+}
+
+export async function restoreProjectVersion(versionId: string): Promise<Project> {
+  await ensureMigrated();
+  const version = await db.projectVersions.get(versionId);
+  if (!version) throw new Error('Saved version could not be found.');
+
+  const current = await db.projects.get(version.projectId);
+  if (current && projectFingerprint(migrateProject(current)) !== projectFingerprint(version.project)) {
+    await snapshotProjectIfNeeded(migrateProject(current));
+  }
+
+  const restored = migrateProject({
+    ...clone(version.project),
+    id: version.projectId,
+    updatedAt: Date.now(),
+  });
+
+  await db.projects.put(restored);
+  await db.settings.put({ id: 'current_project_id', data: restored.id });
+  return clone(restored);
 }
 
 export async function loadProjectsList(): Promise<Project[]> {
@@ -209,7 +302,10 @@ export async function duplicateProjectInList(id: string): Promise<Project | null
 }
 
 export async function deleteProjectFromList(id: string): Promise<Project[]> {
-  await db.projects.delete(id);
+  await db.transaction('rw', db.projects, db.projectVersions, async () => {
+    await db.projects.delete(id);
+    await db.projectVersions.where('projectId').equals(id).delete();
+  });
   return loadProjectsList();
 }
 
