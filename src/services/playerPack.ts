@@ -3,6 +3,7 @@ import { COUNTRIES } from '../constants/countries';
 import { CLUB_LIBRARY } from '../constants/clubs';
 import { PlayerPackSchema } from './schema';
 import { StudioPackV1, applyStudioPackToProject, parseStudioPack } from './studioPack';
+import { migrateImportPack } from './dataPackMigrations';
 
 export type ImportableDataPack = PlayerPackV1 | StudioPackV1;
 
@@ -152,17 +153,22 @@ export function parsePlayerPack(jsonString: string): {
   unknownKeys: string[];
 } {
   try {
-    const parsed = JSON.parse(jsonString);
-    if (!parsed || typeof parsed !== 'object') {
+    const parsedInput = JSON.parse(jsonString);
+    if (!parsedInput || typeof parsedInput !== 'object') {
       return { data: null, error: 'Empty JSON.', unknownKeys: [] };
     }
 
+    const migration = migrateImportPack(parsedInput);
+    const parsed: any = migration.value;
+
     if (parsed.schemaVersion === 'studio-pack-v1') {
-      return parseStudioPack(parsed) as {
+      const result = parseStudioPack(parsed) as {
         data: ImportableDataPack | null;
         error: string | null;
         unknownKeys: string[];
       };
+      if (migration.migratedFrom) result.unknownKeys = [`migrated:${migration.migratedFrom}`, ...result.unknownKeys];
+      return result;
     }
 
     const result = PlayerPackSchema.safeParse(parsed);
@@ -179,6 +185,7 @@ export function parsePlayerPack(jsonString: string): {
       'roleProfile', 'sources', 'metadata',
     ];
     const unknownKeys = Object.keys(parsed).filter((key) => !knownKeys.includes(key));
+    if (migration.migratedFrom) unknownKeys.unshift(`migrated:${migration.migratedFrom}`);
 
     return { data: result.data as unknown as PlayerPackV1, error: null, unknownKeys };
   } catch (error) {
