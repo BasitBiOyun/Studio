@@ -1,4 +1,3 @@
-import { snapdom } from '@zumer/snapdom';
 import { CanvasDimensions, ExportFormat } from '../types';
 
 export function isMobileDevice(): boolean {
@@ -60,6 +59,14 @@ async function waitForAllImages(node: HTMLElement): Promise<void> {
   await Promise.all(images.map(waitForImage));
 }
 
+async function loadSnapdom() {
+  const mod = await import('@zumer/snapdom');
+  if (!mod.snapdom) {
+    throw new Error('SnapDOM failed to load.');
+  }
+  return mod.snapdom;
+}
+
 function getFormatConfig(
   format: ExportFormat | string,
   quality = 0.92
@@ -98,6 +105,8 @@ export async function exportGraphic(
     await waitForAllImages(node);
     await waitFrame();
 
+    const snapdom = await loadSnapdom();
+
     onProgress?.(`Rendering ${targetWidth} × ${targetHeight} px...`);
 
     const result = await snapdom(node, {
@@ -121,7 +130,7 @@ export async function exportGraphic(
     
     const filename = options.filename || `Graphic_${targetWidth}x${targetHeight}.${formatConfig.extension}`;
     
-    onProgress?.(`Downloading...`);
+    onProgress?.('Downloading...');
     
     await result.download({
       format: formatConfig.formatName as 'png' | 'jpeg' | 'webp',
@@ -150,6 +159,8 @@ export async function copyGraphicToClipboard(
     await waitForAllImages(node);
     await waitFrame();
 
+    const snapdom = await loadSnapdom();
+
     const result = await snapdom(node, {
       scale: 1,
       dpr: 1,
@@ -174,7 +185,7 @@ export async function copyGraphicToClipboard(
       quality: 1
     });
 
-    if (!blob) throw new Error("Could not generate image blob");
+    if (!blob) throw new Error('Could not generate image blob');
 
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
     return true;
