@@ -31,7 +31,7 @@ jobs:
           cache: npm
 
       - name: Install app dependencies
-        run: npm ci
+        run: npm install --ignore-scripts
 
       - name: Install Playwright runner
         run: |
