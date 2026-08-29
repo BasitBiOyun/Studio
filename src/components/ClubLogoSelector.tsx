@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IconSearch, IconX, IconUpload, IconBuildingStadium } from '@tabler/icons-react';
-import { searchWikidataClubs, fetchLogoAsDataUrl, ClubSearchResult } from '../services/clubSearch';
+import { searchWikidataClubs, ClubSearchResult } from '../services/clubSearch';
+import { searchLocalClubCatalogue } from '../services/clubCatalogue';
 
 interface Props {
   currentLogoUrl?: string;
   label: string;
-  onSelect: (dataUrl: string) => void;
+  onSelect: (logoUrl: string) => void;
   onRemove: () => void;
   onManualUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function resultKey(club: ClubSearchResult): string {
+  return `${club.name.toLowerCase().trim()}|${club.country.toLowerCase().trim()}`;
 }
 
 export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSelect, onRemove, onManualUpload }) => {
@@ -17,6 +22,7 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchSequence = useRef(0);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -31,35 +37,55 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
-    
-    if (val.trim().length < 3) {
+    const sequence = ++searchSequence.current;
+
+    if (val.trim().length < 2) {
       setResults([]);
+      setLoading(false);
+      setError(null);
       return;
     }
-    
-    setLoading(true);
+
+    const local = searchLocalClubCatalogue(val, 12).map<ClubSearchResult>((club) => ({
+      id: club.id,
+      name: club.name,
+      country: club.country,
+      league: club.league,
+      logoUrl: club.logoUrl,
+    }));
+    setResults(local);
     setError(null);
-    try {
-      const data = await searchWikidataClubs(val);
-      setResults(data.filter(c => c.logoUrl)); // Only show clubs with logos
-    } catch (err) {
-      setError('Search failed');
-    } finally {
+
+    if (local.length >= 8) {
       setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const remote = await searchWikidataClubs(val);
+      if (sequence !== searchSequence.current) return;
+      const merged = new Map(local.map((club) => [resultKey(club), club]));
+      for (const club of remote.filter((item) => item.logoUrl)) {
+        const key = resultKey(club);
+        if (!merged.has(key)) merged.set(key, club);
+      }
+      setResults([...merged.values()].slice(0, 12));
+    } catch {
+      if (sequence === searchSequence.current && local.length === 0) {
+        setError('Search failed');
+      }
+    } finally {
+      if (sequence === searchSequence.current) setLoading(false);
     }
   };
 
-  const handleSelect = async (club: ClubSearchResult) => {
+  const handleSelect = (club: ClubSearchResult) => {
     if (!club.logoUrl) return;
     setIsOpen(false);
     setQuery('');
     setResults([]);
-    try {
-      const dataUrl = await fetchLogoAsDataUrl(club.logoUrl);
-      onSelect(dataUrl);
-    } catch (err) {
-      alert("Could not load the club logo.");
-    }
+    onSelect(club.logoUrl);
   };
 
   return (
@@ -75,7 +101,7 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
           </div>
         ) : (
           <div className="flex flex-col gap-2 w-full">
-            <button 
+            <button
               onClick={() => setIsOpen(!isOpen)}
               className="flex-1 px-3 py-2 bg-black/60 border border-neutral-700 rounded text-xs text-neutral-400 flex items-center gap-2 hover:bg-neutral-800"
             >
@@ -98,9 +124,9 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
         <div className="absolute top-full left-0 right-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-50 overflow-hidden">
           <div className="p-2 border-b border-neutral-800 flex items-center gap-2">
             <IconSearch size={14} className="text-neutral-400" />
-            <input 
-              type="text" 
-              placeholder="e.g. Liverpool, Fenerbahçe..." 
+            <input
+              type="text"
+              placeholder="e.g. Liverpool, Fenerbahçe..."
               value={query}
               onChange={handleSearch}
               className="w-full bg-transparent text-xs text-white outline-none"
@@ -108,19 +134,27 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
             />
           </div>
           <div className="max-h-60 overflow-y-auto">
-            {loading && <div className="p-4 text-center text-xs text-neutral-400">Searching Wikidata...</div>}
+            {loading && results.length === 0 && (
+              <div className="p-4 text-center text-xs text-neutral-400">Searching club database...</div>
+            )}
             {error && <div className="p-4 text-center text-xs text-red-400">{error}</div>}
-            {!loading && !error && query.length >= 3 && results.length === 0 && (
+            {!loading && !error && query.trim().length >= 2 && results.length === 0 && (
               <div className="p-4 text-center text-xs text-neutral-400">No clubs found with a logo.</div>
             )}
-            {!loading && results.map((club) => (
+            {results.map((club) => (
               <button
-                key={club.id}
+                key={`${club.id}-${club.country}`}
                 onClick={() => handleSelect(club)}
                 className="w-full text-left p-2 hover:bg-neutral-800 flex items-center gap-3 border-b border-neutral-800/50"
               >
                 {club.logoUrl && (
-                  <img src={club.logoUrl} alt={club.name} className="w-6 h-6 object-contain bg-white/10 rounded-sm p-0.5" />
+                  <img
+                    src={club.logoUrl}
+                    alt={club.name}
+                    className="w-6 h-6 object-contain bg-white/10 rounded-sm p-0.5"
+                    crossOrigin={club.logoUrl.startsWith('http') ? 'anonymous' : undefined}
+                    referrerPolicy="no-referrer"
+                  />
                 )}
                 <div>
                   <div className="text-xs font-bold text-white">{club.name}</div>
@@ -130,6 +164,9 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
                 </div>
               </button>
             ))}
+            {loading && results.length > 0 && (
+              <div className="px-3 py-2 text-[10px] text-neutral-500">Checking extended Wikidata results…</div>
+            )}
           </div>
         </div>
       )}
