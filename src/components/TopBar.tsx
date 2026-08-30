@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   IconArrowBackUp,
   IconArrowForwardUp,
@@ -10,11 +10,14 @@ import {
   IconCheck,
   IconLoader2,
   IconShieldCheck,
+  IconFileImport,
+  IconTrash,
 } from '@tabler/icons-react';
 import { Project, ExportFormat } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { exportProjectToJson } from '../services/storage';
 import { setOutputLanguage, useOutputLanguage } from '../hooks/useOutputLanguage';
+import { templatePackLabel } from '../services/templatePack';
 
 interface TopBarProps {
   project: Project;
@@ -54,10 +57,13 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [exportFormat, setExportFormat] = useState<ExportFormat | 'json'>('png');
   const [copied, setCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const templateJsonInputRef = useRef<HTMLInputElement>(null);
   const outputLanguage = useOutputLanguage();
 
   const currentDim = CANVAS_DIMENSIONS[project.aspectRatio] || CANVAS_DIMENSIONS['1:1'];
   const exportWidth = currentDim.width * scaleMultiplier;
+  const activeVisuals = project.templates[project.templateType]?.visuals;
+  const packLabel = templatePackLabel(project.templateType);
 
   const handleCopy = async () => {
     try {
@@ -67,6 +73,32 @@ export const TopBar: React.FC<TopBarProps> = ({
     } catch {
       // The app-level copy handler surfaces the error.
     }
+  };
+
+  const handleTemplateJsonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const jsonText = await file.text();
+      window.dispatchEvent(new CustomEvent('bbo-template-json-import', {
+        detail: {
+          jsonText,
+          templateType: project.templateType,
+        },
+      }));
+    } catch (error) {
+      console.error(error);
+      window.alert('Could not read the selected JSON file.');
+    } finally {
+      if (templateJsonInputRef.current) templateJsonInputRef.current.value = '';
+    }
+  };
+
+  const requestImageRemoval = (secondary = false) => {
+    window.dispatchEvent(new CustomEvent('bbo-remove-player-image', {
+      detail: { secondary },
+    }));
   };
 
   const handleExportClick = async (scale: 1 | 2 | 4, format: ExportFormat | 'json') => {
@@ -124,7 +156,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 min-w-0">
         <div className="flex items-center gap-0.5 sm:gap-1 bg-neutral-900/80 p-1 rounded-xl border border-neutral-800/80">
           <button
             onClick={onUndo}
@@ -175,6 +207,47 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           ))}
         </div>
+
+        <input
+          ref={templateJsonInputRef}
+          type="file"
+          accept=".json,application/json"
+          onChange={handleTemplateJsonFile}
+          className="hidden"
+        />
+        <button
+          onClick={() => templateJsonInputRef.current?.click()}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-bold text-neutral-300 hover:bg-neutral-800 hover:text-cyan-300 transition-colors"
+          title={`Import ${packLabel} JSON`}
+          aria-label={`Import ${packLabel} JSON`}
+        >
+          <IconFileImport size={16} className="text-cyan-400" />
+          <span className="hidden 2xl:inline">{packLabel} JSON</span>
+          <span className="2xl:hidden">JSON</span>
+        </button>
+
+        {activeVisuals?.playerImageSrc && (
+          <button
+            onClick={() => requestImageRemoval(false)}
+            className="p-1.5 min-w-9 min-h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:bg-red-950/70 hover:border-red-800 hover:text-red-300 transition-colors flex items-center justify-center"
+            title="Remove player image. Undo is available."
+            aria-label="Remove player image"
+          >
+            <IconTrash size={16} />
+          </button>
+        )}
+
+        {activeVisuals?.secondaryPlayerImageSrc && (
+          <button
+            onClick={() => requestImageRemoval(true)}
+            className="hidden sm:flex p-1.5 min-w-9 min-h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:bg-red-950/70 hover:border-red-800 hover:text-red-300 transition-colors items-center justify-center"
+            title="Remove second player image. Undo is available."
+            aria-label="Remove second player image"
+          >
+            <IconTrash size={16} />
+            <span className="sr-only">Player 2</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenQualityCheck}
