@@ -41,10 +41,12 @@ const canvas = fs.readFileSync(path.join(root, 'src/components/InteractiveCanvas
 const topBar = fs.readFileSync(path.join(root, 'src/components/TopBar.tsx'), 'utf8');
 const card = fs.readFileSync(path.join(root, 'src/components/ScoutingCard.tsx'), 'utf8');
 
-assert.ok(canvas.includes('Import {templatePackLabel(activeTemplateKey)} JSON'));
-assert.ok(canvas.includes('Remove Player Image'));
-assert.ok(canvas.includes('secondaryPlayerImageSrc ='));
+assert.ok(canvas.includes("window.addEventListener('bbo-template-json-import'"));
+assert.ok(canvas.includes("window.addEventListener('bbo-remove-player-image'"));
+assert.ok(canvas.includes("secondaryPlayerImageSrc = ''"));
 assert.ok(topBar.includes("(['tr', 'en'] as const)"));
+assert.ok(topBar.includes("new CustomEvent('bbo-template-json-import'"));
+assert.ok(topBar.includes('requestImageRemoval'));
 assert.ok(card.includes('localizeCardElement'));
 assert.ok(card.includes('card-language-${outputLanguage}'));
 
