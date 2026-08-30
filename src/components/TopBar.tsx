@@ -14,6 +14,7 @@ import {
 import { Project, ExportFormat } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { exportProjectToJson } from '../services/storage';
+import { setOutputLanguage, useOutputLanguage } from '../hooks/useOutputLanguage';
 
 interface TopBarProps {
   project: Project;
@@ -53,6 +54,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [exportFormat, setExportFormat] = useState<ExportFormat | 'json'>('png');
   const [copied, setCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const outputLanguage = useOutputLanguage();
 
   const currentDim = CANVAS_DIMENSIONS[project.aspectRatio] || CANVAS_DIMENSIONS['1:1'];
   const exportWidth = currentDim.width * scaleMultiplier;
@@ -151,6 +153,27 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <IconRotate2 size={18} />
           </button>
+        </div>
+
+        <div
+          className="flex items-center gap-0.5 p-1 rounded-xl bg-neutral-900 border border-neutral-800"
+          title="Card output language"
+          aria-label="Card output language"
+        >
+          {(['tr', 'en'] as const).map((language) => (
+            <button
+              key={language}
+              onClick={() => setOutputLanguage(language)}
+              className={`min-w-9 min-h-8 px-2 rounded-lg text-[11px] font-black transition-colors ${
+                outputLanguage === language
+                  ? 'bg-cyan-500 text-black'
+                  : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+              }`}
+              aria-pressed={outputLanguage === language}
+            >
+              {language.toUpperCase()}
+            </button>
+          ))}
         </div>
 
         <button
