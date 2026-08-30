@@ -15,6 +15,20 @@ const TEMPLATE_CONTENT_KEY: Partial<Record<TemplateType, keyof TemplateContent>>
   'team-profile': 'teamProfileData',
 };
 
+const ENVELOPE_KEYS = new Set([
+  'schemaVersion',
+  'templateType',
+  'type',
+  'data',
+  'content',
+  'sharedData',
+  'sharedPlayer',
+  'metadata',
+  'context',
+  'sources',
+  'generatedAt',
+]);
+
 export interface TemplatePackParseResult {
   data: any | null;
   error: string | null;
@@ -52,7 +66,10 @@ function unwrapTemplatePayload(parsed: any, templateType: TemplateType) {
   if (isPlainObject(parsed.data)) return parsed.data;
   if (isPlainObject(parsed.content?.[contentKey])) return parsed.content[contentKey];
   if (isPlainObject(parsed[contentKey])) return parsed[contentKey];
-  return parsed;
+
+  return Object.fromEntries(
+    Object.entries(parsed).filter(([key]) => !ENVELOPE_KEYS.has(key)),
+  );
 }
 
 export function parseTemplatePack(jsonString: string, templateType: TemplateType): TemplatePackParseResult {
@@ -91,7 +108,7 @@ export function parseTemplatePack(jsonString: string, templateType: TemplateType
     }
 
     const payload = unwrapTemplatePayload(parsed, templateType);
-    if (!isPlainObject(payload)) {
+    if (!isPlainObject(payload) || Object.keys(payload).length === 0) {
       return { data: null, error: 'Template JSON payload is empty or invalid.', warnings: [] };
     }
 
