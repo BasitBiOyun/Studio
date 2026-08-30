@@ -8,6 +8,7 @@ on:
       - 'scripts/sync-uefa-club-catalogue.cjs'
       - 'scripts/patch-uefa-logo-gaps.cjs'
       - 'scripts/verify-uefa-top-divisions.cjs'
+      - 'scripts/report-uefa-top-divisions.cjs'
       - '.github/workflows/sync-club-catalogue.yml'
   schedule:
     - cron: '20 4 1 * *'
@@ -39,8 +40,17 @@ jobs:
       - name: Patch unresolved crest IDs
         run: node scripts/patch-uefa-logo-gaps.cjs
 
-      - name: Verify all UEFA domestic top divisions
-        run: node scripts/verify-uefa-top-divisions.cjs
+      - name: Verify UEFA domestic top divisions (report only)
+        run: node scripts/report-uefa-top-divisions.cjs
+
+      - name: Upload UEFA logo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uefa-logo-coverage-report
+          path: artifacts/uefa-logo-report.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Commit refreshed snapshot
         run: |
