@@ -1,5 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { IconFileImport, IconTrash } from '@tabler/icons-react';
 import { Project } from '../types';
+import {
+  applyTemplatePackToProject,
+  parseTemplatePack,
+  templatePackLabel,
+} from '../services/templatePack';
 
 interface InteractiveCanvasProps {
   children: React.ReactNode;
@@ -20,6 +26,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   interactive
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const templateJsonInputRef = useRef<HTMLInputElement>(null);
   const [targets, setTargets] = useState<Array<HTMLElement | SVGElement>>([]);
   const moveableRef = useRef<any>(null);
   const [MoveableComponent, setMoveableComponent] = useState<ToolComponent | null>(null);
@@ -55,6 +62,47 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   if (!activeTemplate) {
     return <div className="relative w-full h-full">{children}</div>;
   }
+
+  const removePlayerImage = (isSecondary = false) => {
+    const newProject = JSON.parse(JSON.stringify(project)) as Project;
+    const template = newProject.templates[activeTemplateKey];
+    if (!template) return;
+
+    if (isSecondary) {
+      template.visuals.secondaryPlayerImageSrc = '';
+    } else {
+      template.visuals.playerImageSrc = '';
+    }
+
+    newProject.updatedAt = Date.now();
+    setTargets([]);
+    onUpdateProject(newProject);
+  };
+
+  const handleTemplateJsonUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = parseTemplatePack(String(reader.result || ''), activeTemplateKey);
+      if (result.error || !result.data) {
+        window.alert(result.error || 'Template JSON could not be imported.');
+        if (templateJsonInputRef.current) templateJsonInputRef.current.value = '';
+        return;
+      }
+
+      const updatedProject = applyTemplatePackToProject(project, activeTemplateKey, result.data);
+      onUpdateProject(updatedProject);
+
+      if (result.warnings.length > 0) {
+        window.alert(`JSON imported. Notes: ${result.warnings.join(', ')}`);
+      }
+
+      if (templateJsonInputRef.current) templateJsonInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
 
   const handleDrag = (e: any) => {
     const target = e.target as HTMLElement;
@@ -170,6 +218,51 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         className="relative flex-1 w-full h-full overflow-hidden canvas-container"
       >
         {children}
+
+        {interactive && (
+          <div className="absolute top-3 right-3 z-[90] flex flex-wrap justify-end gap-1.5 max-w-[72%] pointer-events-auto">
+            <input
+              ref={templateJsonInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleTemplateJsonUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => templateJsonInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-950/90 border border-neutral-700 text-white text-[11px] font-bold shadow-xl backdrop-blur-md hover:border-cyan-500 hover:text-cyan-300"
+              title={`Import ${templatePackLabel(activeTemplateKey)} JSON`}
+            >
+              <IconFileImport size={14} />
+              <span>Import {templatePackLabel(activeTemplateKey)} JSON</span>
+            </button>
+
+            {activeTemplate.visuals.playerImageSrc && (
+              <button
+                type="button"
+                onClick={() => removePlayerImage(false)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-950/85 border border-red-800/70 text-red-200 text-[11px] font-bold shadow-xl backdrop-blur-md hover:bg-red-900"
+                title="Remove primary player image. Undo is available."
+              >
+                <IconTrash size={14} />
+                <span>Remove Player Image</span>
+              </button>
+            )}
+
+            {activeTemplate.visuals.secondaryPlayerImageSrc && (
+              <button
+                type="button"
+                onClick={() => removePlayerImage(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-950/85 border border-red-800/70 text-red-200 text-[11px] font-bold shadow-xl backdrop-blur-md hover:bg-red-900"
+                title="Remove secondary player image. Undo is available."
+              >
+                <IconTrash size={14} />
+                <span>Remove Player 2</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {toolsReady && (
           <>
