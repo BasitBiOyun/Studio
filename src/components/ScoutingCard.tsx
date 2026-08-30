@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { Project, CanvasDimensions } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { BackgroundPattern } from './design/BackgroundPattern';
 import { PlayerPhotoLayer } from './design/PlayerPhotoLayer';
 import { LogosLayer } from './design/LogosLayer';
+import { useOutputLanguage } from '../hooks/useOutputLanguage';
+import { localizeCardElement } from '../services/outputLanguage';
 
 import { ScoutingReportView } from './templates/ScoutingReportView';
 import { PlayerComparisonView } from './templates/PlayerComparisonView';
@@ -38,6 +40,14 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
         logos,
       },
     } = activeTemplate;
+
+    const outputLanguage = useOutputLanguage();
+    const localizedContentRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+      if (!localizedContentRef.current) return;
+      localizeCardElement(localizedContentRef.current, outputLanguage);
+    }, [outputLanguage, project]);
 
     const dimensions: CanvasDimensions = CANVAS_DIMENSIONS[aspectRatio] || CANVAS_DIMENSIONS['1:1'];
     const directEditingEnabled = interactive && !advancedLayout?.locked;
@@ -76,6 +86,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
       <div
         ref={ref}
         id="scouting-graphic-root"
+        lang={outputLanguage}
         className="relative select-none overflow-hidden"
         style={{
           width: `${dimensions.width}px`,
@@ -124,7 +135,11 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
 
         <LogosLayer logos={logos} />
 
-        <div className="relative z-20 w-full h-full flex flex-col justify-between pointer-events-none">
+        <div
+          key={`card-language-${outputLanguage}`}
+          ref={localizedContentRef}
+          className="relative z-20 w-full h-full flex flex-col justify-between pointer-events-none"
+        >
           {renderTemplateContent()}
         </div>
       </div>
