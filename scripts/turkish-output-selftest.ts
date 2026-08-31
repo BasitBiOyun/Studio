@@ -4,6 +4,7 @@ import path from 'node:path';
 import { DEFAULT_PROJECT } from '../src/constants/presets';
 import { resolveCountryFlag, turkishUppercase } from '../src/services/footballLocale';
 import { translateCardText } from '../src/services/outputLanguage';
+import { translateStudioText } from '../src/services/studioLocale';
 import { applyPlayerPackToProject, parsePlayerPack } from '../src/services/playerPack';
 
 assert.equal(resolveCountryFlag('England', 'ENG'), 'gb-eng');
@@ -13,6 +14,10 @@ assert.equal(translateCardText('Left', 'tr'), 'Sol');
 assert.equal(translateCardText('HERE WE GO!', 'tr'), 'TRANSFER');
 assert.equal(translateCardText('TRANSFER AGREEMENT', 'tr'), 'TRANSFER');
 assert.equal(translateCardText('5-YEAR CONTRACT (UNTIL 2031)', 'tr'), "5 YILLIK SÖZLEŞME (2031'E KADAR)");
+assert.equal(translateCardText('UEFA Champions League Quarter Final', 'tr'), 'UEFA Şampiyonlar Ligi ÇEYREK FİNAL');
+assert.equal(translateStudioText('Data & Text', 'tr'), 'Veri ve Metin');
+assert.equal(translateStudioText('Match Preview', 'tr'), 'Maç Önizlemesi');
+assert.equal(translateStudioText('2× Enhance', 'tr'), '2× Netleştir');
 assert.equal(turkishUppercase('envanteri'), 'ENVANTERİ');
 
 const packJson = JSON.stringify({
