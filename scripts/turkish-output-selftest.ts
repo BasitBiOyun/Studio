@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { DEFAULT_PROJECT } from '../src/constants/presets';
 import { resolveCountryFlag, turkishUppercase } from '../src/services/footballLocale';
 import { translateCardText } from '../src/services/outputLanguage';
@@ -46,5 +48,11 @@ assert.equal(project.sharedData.player.positions, 'Attacking Midfielder / Right 
 assert.equal((project.templates['scouting-report'].content as any).scoutingHeadline, 'SOL AYAĞIYLA DAR ALANDA FARK YARATAN YARATICI HÜCUMCU');
 assert.equal(project.templates['scouting-report'].content.stats.length, 6);
 assert.equal(project.templates['scouting-report'].content.strengths.length, 5);
+
+const root = path.resolve(process.cwd());
+const transferAutocomplete = fs.readFileSync(path.join(root, 'src/services/transferClubAutocomplete.ts'), 'utf8');
+assert.ok(transferAutocomplete.includes("if (label.textContent !== desiredLabel)"));
+assert.ok(transferAutocomplete.includes('requestAnimationFrame'));
+assert.ok(transferAutocomplete.includes('if (frameId !== null) return'));
 
 console.log('Turkish output regression tests passed.');
