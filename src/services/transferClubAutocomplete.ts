@@ -42,26 +42,46 @@ function connectTransferInputs() {
     const input = container?.querySelector('input[type="text"]') as HTMLInputElement | null;
     if (!input) continue;
 
-    label.textContent = language === 'tr'
+    const desiredLabel = language === 'tr'
       ? (isFrom ? 'Ayrıldığı Kulüp' : 'Yeni Kulüp')
       : (isFrom ? 'From Club' : 'To Club');
 
-    input.setAttribute('list', DATALIST_ID);
-    input.setAttribute('autocomplete', 'off');
-    input.setAttribute('placeholder', language === 'tr' ? 'Kulüp ara veya seç' : 'Search or select club');
+    // Changing textContent creates a childList mutation. Only write when the
+    // value actually changes so the observer cannot trigger itself forever.
+    if (label.textContent !== desiredLabel) {
+      label.textContent = desiredLabel;
+    }
+
+    if (input.getAttribute('list') !== DATALIST_ID) input.setAttribute('list', DATALIST_ID);
+    if (input.getAttribute('autocomplete') !== 'off') input.setAttribute('autocomplete', 'off');
+
+    const desiredPlaceholder = language === 'tr' ? 'Kulüp ara veya seç' : 'Search or select club';
+    if (input.getAttribute('placeholder') !== desiredPlaceholder) {
+      input.setAttribute('placeholder', desiredPlaceholder);
+    }
   }
 }
 
 export function attachTransferClubAutocomplete() {
   if (typeof document === 'undefined') return () => undefined;
 
+  let frameId: number | null = null;
+  const scheduleConnect = () => {
+    if (frameId !== null) return;
+    frameId = window.requestAnimationFrame(() => {
+      frameId = null;
+      connectTransferInputs();
+    });
+  };
+
   connectTransferInputs();
-  const observer = new MutationObserver(() => connectTransferInputs());
+  const observer = new MutationObserver(scheduleConnect);
   observer.observe(document.body, { childList: true, subtree: true });
-  const unsubscribeLanguage = subscribeOutputLanguage(connectTransferInputs);
+  const unsubscribeLanguage = subscribeOutputLanguage(scheduleConnect);
 
   return () => {
     observer.disconnect();
     unsubscribeLanguage();
+    if (frameId !== null) window.cancelAnimationFrame(frameId);
   };
 }
