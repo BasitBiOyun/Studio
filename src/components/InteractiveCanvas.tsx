@@ -1,9 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { IconLoader2, IconPhotoPlus, IconSparkles } from '@tabler/icons-react';
 import { Project } from '../types';
 import {
   applyTemplatePackToProject,
   parseTemplatePack,
 } from '../services/templatePack';
+import { upscaleImage2x } from '../services/clientUpscaler';
+import {
+  getTemplateVisualPolicy,
+  usablePlayerImageSrc,
+} from '../services/templateVisualPolicy';
 
 interface InteractiveCanvasProps {
   children: React.ReactNode;
@@ -37,9 +43,14 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   const moveableRef = useRef<any>(null);
   const [MoveableComponent, setMoveableComponent] = useState<ToolComponent | null>(null);
   const [SelectoComponent, setSelectoComponent] = useState<ToolComponent | null>(null);
+  const [upscalingSlot, setUpscalingSlot] = useState<'primary' | 'secondary' | null>(null);
 
   const activeTemplateKey = project.templateType || 'scouting-report';
   const activeTemplate = project.templates[activeTemplateKey];
+  const visualPolicy = getTemplateVisualPolicy(activeTemplateKey);
+  const primaryImageSrc = usablePlayerImageSrc(activeTemplate?.visuals?.playerImageSrc);
+  const secondaryImageSrc = usablePlayerImageSrc(activeTemplate?.visuals?.secondaryPlayerImageSrc);
+  const isComparison = activeTemplateKey === 'player-comparison';
 
   useEffect(() => {
     setTargets([]);
@@ -121,6 +132,59 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   if (!activeTemplate) {
     return <div className="relative w-full h-full">{children}</div>;
   }
+
+  const replaceVisualImage = (src: string, secondary = false) => {
+    const newProject = JSON.parse(JSON.stringify(project)) as Project;
+    const template = newProject.templates[activeTemplateKey];
+    if (!template) return;
+    if (secondary) template.visuals.secondaryPlayerImageSrc = src;
+    else template.visuals.playerImageSrc = src;
+    newProject.updatedAt = Date.now();
+    setTargets([]);
+    onUpdateProject(newProject);
+  };
+
+  const handleQuickImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    secondary = false,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { default: imageCompression } = await import('browser-image-compression');
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 1.5,
+        maxWidthOrHeight: 2200,
+        useWebWorker: true,
+      });
+      const reader = new FileReader();
+      reader.onload = () => replaceVisualImage(String(reader.result || ''), secondary);
+      reader.readAsDataURL(compressed);
+    } catch (error) {
+      console.error('Quick visual upload failed.', error);
+      window.alert('The image could not be processed.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleUpscale = async (secondary = false) => {
+    const source = secondary ? secondaryImageSrc : primaryImageSrc;
+    if (!source || upscalingSlot) return;
+
+    const slot = secondary ? 'secondary' : 'primary';
+    setUpscalingSlot(slot);
+    try {
+      const upscaled = await upscaleImage2x(source);
+      replaceVisualImage(upscaled, secondary);
+    } catch (error) {
+      console.error('Free ESRGAN upscale failed.', error);
+      window.alert('AI upscale could not be completed. Check your connection and try again.');
+    } finally {
+      setUpscalingSlot(null);
+    }
+  };
 
   const handleDrag = (e: any) => {
     const target = e.target as HTMLElement;
@@ -229,6 +293,14 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     (target as HTMLElement).getAttribute?.('data-moveable-id')?.startsWith('logo-')
   );
 
+  const showQuickImageTools = Boolean(
+    interactive && (
+      isComparison ||
+      primaryImageSrc ||
+      secondaryImageSrc
+    )
+  );
+
   return (
     <div className="relative w-full h-full flex flex-col">
       <div
@@ -236,6 +308,47 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         className="relative flex-1 w-full h-full overflow-hidden canvas-container"
       >
         {children}
+
+        {showQuickImageTools && (
+          <div className="absolute top-3 right-3 z-[80] flex items-center gap-1.5 rounded-xl border border-neutral-700/80 bg-neutral-950/90 p-1.5 shadow-xl backdrop-blur-md">
+            {isComparison && visualPolicy.allowPrimaryImage && (
+              <label className="cursor-pointer flex items-center gap-1 px-2 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-[10px] font-bold text-neutral-200">
+                <IconPhotoPlus size={13} /> P1 Foto
+                <input type="file" accept="image/*" className="hidden" onChange={(event) => void handleQuickImageUpload(event, false)} />
+              </label>
+            )}
+            {isComparison && visualPolicy.allowSecondaryImage && (
+              <label className="cursor-pointer flex items-center gap-1 px-2 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-[10px] font-bold text-neutral-200">
+                <IconPhotoPlus size={13} /> P2 Foto
+                <input type="file" accept="image/*" className="hidden" onChange={(event) => void handleQuickImageUpload(event, true)} />
+              </label>
+            )}
+            {primaryImageSrc && (
+              <button
+                type="button"
+                onClick={() => void handleUpscale(false)}
+                disabled={Boolean(upscalingSlot)}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/40 hover:bg-cyan-500/25 text-[10px] font-black text-cyan-300 disabled:opacity-50"
+                title="Free 2× ESRGAN upscale. Runs in your browser."
+              >
+                {upscalingSlot === 'primary' ? <IconLoader2 size={13} className="animate-spin" /> : <IconSparkles size={13} />}
+                {isComparison ? 'P1 2×' : 'AI 2×'}
+              </button>
+            )}
+            {secondaryImageSrc && (
+              <button
+                type="button"
+                onClick={() => void handleUpscale(true)}
+                disabled={Boolean(upscalingSlot)}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/40 hover:bg-cyan-500/25 text-[10px] font-black text-cyan-300 disabled:opacity-50"
+                title="Free 2× ESRGAN upscale for player 2. Runs in your browser."
+              >
+                {upscalingSlot === 'secondary' ? <IconLoader2 size={13} className="animate-spin" /> : <IconSparkles size={13} />}
+                P2 2×
+              </button>
+            )}
+          </div>
+        )}
 
         {toolsReady && (
           <>
