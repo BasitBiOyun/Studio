@@ -35,43 +35,11 @@ function drawHighQuality(
   return canvas;
 }
 
-function subtleSharpen(canvas: HTMLCanvasElement): HTMLCanvasElement {
-  const width = canvas.width;
-  const height = canvas.height;
-  // Avoid an expensive full-resolution convolution on very large images.
-  // High-quality resampling alone is safer above this threshold.
-  if (width * height > 9_000_000) return canvas;
-
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) return canvas;
-
-  try {
-    const image = context.getImageData(0, 0, width, height);
-    const source = new Uint8ClampedArray(image.data);
-    const data = image.data;
-    const strength = 0.16;
-    const stride = width * 4;
-
-    for (let y = 1; y < height - 1; y += 1) {
-      for (let x = 1; x < width - 1; x += 1) {
-        const index = (y * width + x) * 4;
-        for (let channel = 0; channel < 3; channel += 1) {
-          const center = source[index + channel];
-          const neighbours =
-            source[index - 4 + channel] +
-            source[index + 4 + channel] +
-            source[index - stride + channel] +
-            source[index + stride + channel];
-          const sharpened = center + strength * (4 * center - neighbours);
-          data[index + channel] = Math.max(0, Math.min(255, Math.round(sharpened)));
-        }
-      }
-    }
-    context.putImageData(image, 0, 0);
-  } catch (error) {
-    console.warn('Sharpen pass skipped.', error);
-  }
-  return canvas;
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+    else setTimeout(resolve, 0);
+  });
 }
 
 export async function upscaleImage2x(imageSrc: string): Promise<string> {
@@ -92,14 +60,16 @@ export async function upscaleImage2x(imageSrc: string): Promise<string> {
   const finalWidth = Math.max(sourceWidth, Math.round(targetWidth * scaleLimit));
   const finalHeight = Math.max(sourceHeight, Math.round(targetHeight * scaleLimit));
 
-  // Two-stage resampling tends to preserve edges better than one very large jump,
-  // while remaining completely local, free and deterministic.
+  // Keep this completely local and free, but avoid full-resolution pixel loops on
+  // the main thread. Two high-quality resampling passes give a useful 2x source
+  // for graphic work without freezing the Studio on ordinary laptops.
   const midScale = Math.min(1.5, finalWidth / sourceWidth);
   const midWidth = Math.max(sourceWidth, Math.round(sourceWidth * midScale));
   const midHeight = Math.max(sourceHeight, Math.round(sourceHeight * midScale));
   const mid = drawHighQuality(image, sourceWidth, sourceHeight, midWidth, midHeight);
+  await yieldToBrowser();
   const output = drawHighQuality(mid, midWidth, midHeight, finalWidth, finalHeight);
-  subtleSharpen(output);
+  await yieldToBrowser();
 
   try {
     return output.toDataURL('image/png', 1);
