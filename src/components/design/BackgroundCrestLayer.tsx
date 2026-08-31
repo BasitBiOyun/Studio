@@ -6,7 +6,7 @@ interface BackgroundCrestLayerProps {
 }
 
 export const BackgroundCrestLayer: React.FC<BackgroundCrestLayerProps> = ({ logo }) => {
-  if (!logo?.src) return null;
+  if (!logo?.src || logo.visible === false) return null;
 
   const scale = 0.95 + Math.min(Math.max(logo.size || 120, 30), 300) / 420;
   const opacity = Math.min(0.18, Math.max(0.055, ((logo.opacity ?? 100) / 100) * 0.14));
