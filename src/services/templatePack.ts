@@ -1,5 +1,6 @@
 import { Project, TemplateContent, TemplateType } from '../types';
 import { applyPlayerPackToProject, parsePlayerPack } from './playerPack';
+import { resolveCountryFlag } from './footballLocale';
 
 const TEMPLATE_CONTENT_KEY: Partial<Record<TemplateType, keyof TemplateContent>> = {
   'player-comparison': 'comparisonData',
@@ -135,7 +136,32 @@ export function parseTemplatePack(jsonString: string, templateType: TemplateType
 
 export function applyTemplatePackToProject(project: Project, templateType: TemplateType, parsedData: any): Project {
   if (templateType === 'scouting-report') {
-    return applyPlayerPackToProject(project, parsedData);
+    const updated = applyPlayerPackToProject(project, parsedData);
+    const content = updated.templates['scouting-report']?.content as any;
+    const studioData = parsedData?.schemaVersion === 'studio-pack-v1' ? parsedData.data : null;
+    const rawPlayer = studioData?.player || parsedData?.player;
+
+    if (content && studioData?.headline) {
+      content.scoutingHeadline = studioData.headline;
+    }
+
+    if (content && parsedData?.schemaVersion === 'studio-pack-v1') {
+      content.dataProvenance = {
+        ...(content.dataProvenance || {}),
+        schemaVersion: 'studio-pack-v1',
+        context: parsedData.context,
+        sources: parsedData.sources || [],
+        importedAt: new Date().toISOString(),
+      };
+    }
+
+    const resolvedFlag = resolveCountryFlag(
+      updated.sharedData.player.nationality,
+      rawPlayer?.nationalityCode || rawPlayer?.countryCode || rawPlayer?.nationality?.code || updated.sharedData.player.countryFlag,
+    );
+    if (resolvedFlag) updated.sharedData.player.countryFlag = resolvedFlag;
+
+    return updated;
   }
 
   const contentKey = TEMPLATE_CONTENT_KEY[templateType];
