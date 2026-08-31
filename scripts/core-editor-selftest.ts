@@ -15,7 +15,7 @@ const logosLayer = read('src/components/design/LogosLayer.tsx');
 const projectLibrary = read('src/components/ProjectLibraryModal.tsx');
 const storage = read('src/services/storage.ts');
 const exporter = read('src/services/exporter.ts');
-const sidebar = read('src/components/EditorSidebar.tsx');
+const sidebar = read('src/components/EditorSidebarV2.tsx');
 
 assert.ok(
   !app.includes('currentProject.imageTransform'),
@@ -91,8 +91,12 @@ assert.ok(
   'Visuals crop integration must have local React state.',
 );
 assert.ok(
-  sidebar.includes("await import('browser-image-compression')") && sidebar.includes("await import('node-vibrant/browser')"),
-  'Optional image tooling must stay lazy-loaded and browser-safe.',
+  sidebar.includes("await import('browser-image-compression')") && sidebar.includes('upscaleImage2x'),
+  'Optional image tooling must stay lazy-loaded and free client-side upscale must remain wired.',
+);
+assert.ok(
+  sidebar.includes('getTemplateVisualPolicy') && sidebar.includes('templatePackLabel(project.templateType)'),
+  'Sidebar data and visuals must follow the active template.',
 );
 
 const matchResultProject = JSON.parse(JSON.stringify(DEFAULT_PROJECT));
@@ -143,4 +147,4 @@ for (const template of expectedTemplateCases) {
   assert.ok(card.includes(`case '${template}'`) || template === 'scouting-report', `Renderer missing template: ${template}`);
 }
 
-console.log('Core editor self-test passed: project storage, Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
+console.log('Core editor self-test passed: project storage, template-aware Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
