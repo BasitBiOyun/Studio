@@ -68,7 +68,7 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const importedContext = (templateContent as any).dataProvenance?.context;
   const contextSubtitle = formatComparisonContext(importedContext);
   const subtitle = contextSubtitle || data.subtitle;
