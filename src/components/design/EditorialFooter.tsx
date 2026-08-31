@@ -21,7 +21,6 @@ export const EditorialFooter: React.FC<EditorialFooterProps> = ({
       className={`relative z-20 w-full flex items-center justify-between border-t pt-4 select-none ${className}`}
       style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}
     >
-      {/* Left Attribution / Prepared for */}
       <div className="flex items-center gap-2.5">
         <div
           className="w-2 h-2 rounded-full shadow-sm"
@@ -32,17 +31,13 @@ export const EditorialFooter: React.FC<EditorialFooterProps> = ({
         </span>
       </div>
 
-      {/* Right Brand Badge */}
-      <div className="relative h-[18px] flex items-center pl-[46px]">
+      <div className="relative h-[18px] w-[68px] flex-shrink-0" aria-label="BasitBiOyun">
         <img
           src={brandLogoUrl}
           alt="BasitBiOyun"
           draggable={false}
-          className="pointer-events-none absolute left-0 bottom-0 w-[40px] h-[40px] object-cover select-none"
+          className="pointer-events-none absolute right-0 bottom-[-2px] w-[64px] h-[64px] object-cover select-none"
         />
-        <span className="text-[15px] leading-[18px] font-black tracking-widest text-neutral-300 whitespace-nowrap">
-          {credits.visualBy || 'Visual by @BasitBiOyun'}
-        </span>
       </div>
     </div>
   );
