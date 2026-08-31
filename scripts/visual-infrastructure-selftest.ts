@@ -58,9 +58,10 @@ assert.ok(interactiveCanvas.includes('P2 Foto'));
 assert.ok(interactiveCanvas.includes('P2 2×'));
 
 const upscaler = read('src/services/clientUpscaler.ts');
-assert.ok(upscaler.includes('@upscalerjs/esrgan-slim@1.0.0'));
-assert.ok(upscaler.includes('upscaler@1.0.0'));
-assert.ok(upscaler.includes("patchSize: 64"));
-assert.ok(upscaler.includes("output: 'base64'"));
+assert.ok(!upscaler.includes('cdn.jsdelivr.net'), 'Enhancer must not hang on remote model/runtime downloads.');
+assert.ok(upscaler.includes("imageSmoothingQuality = 'high'"));
+assert.ok(upscaler.includes("toDataURL('image/png'"));
+assert.ok(upscaler.includes('subtleSharpen'));
+assert.ok(upscaler.includes('sourceWidth * 2'));
 
 console.log('Visual infrastructure self-test passed.');
