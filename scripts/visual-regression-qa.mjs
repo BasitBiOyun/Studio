@@ -101,15 +101,18 @@ async function runPhase2Interactions(page) {
   await arsenalResult.click();
   await page.locator('[data-club-logo-selected="true"]').first().waitFor({ state: 'visible', timeout: 5_000 });
 
-  const canvasLogo = page.locator('#scouting-graphic-root .moveable-target img').first();
+  const artboardRoot = page.locator('[data-editor-artboard] #scouting-graphic-root').first();
+  await artboardRoot.waitFor({ state: 'attached', timeout: 5_000 });
+
+  const canvasLogo = artboardRoot.locator('.moveable-target img').first();
   await canvasLogo.waitFor({ state: 'attached', timeout: 5_000 });
 
-  const brandLogo = page.locator('#scouting-graphic-root img[alt="BasitBiOyun"]').first();
+  const brandLogo = artboardRoot.locator('img[alt="BasitBiOyun"]').first();
   await brandLogo.waitFor({ state: 'attached', timeout: 5_000 });
   const brandOk = await brandLogo.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0);
   if (!brandOk) throw new Error('Phase 2: bundled BasitBiOyun footer logo is broken.');
 
-  const footerText = await page.locator('#scouting-graphic-root').innerText();
+  const footerText = await artboardRoot.innerText();
   if (footerText.includes('Football Editorial Analytics') || footerText.includes('Futbol Analizleri')) {
     throw new Error('Phase 2: legacy footer attribution is still visible.');
   }
