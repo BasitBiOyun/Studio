@@ -40,7 +40,6 @@ export const LogosLayer: React.FC<LogosLayerProps> = ({ logos, className = '' })
               src={logo.src}
               alt={logo.name || 'Logo'}
               className="max-w-full max-h-full object-contain filter drop-shadow(0 15px 25px rgba(0,0,0,0.7))"
-              crossOrigin={logo.src?.startsWith('http') ? 'anonymous' : undefined}
               referrerPolicy="no-referrer"
               onError={(e) => {
                 console.warn('Logo visual failed to load.', logo.src);
