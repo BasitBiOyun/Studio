@@ -1,1 +1,1 @@
-export { EditorSidebarV2 as EditorSidebar } from './EditorSidebarV2';
+export { EditorSidebarV3 as EditorSidebar } from './EditorSidebarV3';
