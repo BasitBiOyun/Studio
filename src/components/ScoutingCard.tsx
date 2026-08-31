@@ -2,11 +2,17 @@ import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { Project, CanvasDimensions } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { BackgroundPattern } from './design/BackgroundPattern';
+import { BackgroundCrestLayer } from './design/BackgroundCrestLayer';
 import { PlayerPhotoLayer } from './design/PlayerPhotoLayer';
 import { LogosLayer } from './design/LogosLayer';
 import { useOutputLanguage } from '../hooks/useOutputLanguage';
 import { localizeCardElement } from '../services/outputLanguage';
 import { attachTransferClubAutocomplete } from '../services/transferClubAutocomplete';
+import {
+  getTemplateVisualPolicy,
+  usableLogoSrc,
+  usablePlayerImageSrc,
+} from '../services/templateVisualPolicy';
 
 import { ScoutingReportView } from './templates/ScoutingReportView';
 import { PlayerComparisonView } from './templates/PlayerComparisonView';
@@ -41,6 +47,20 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
         logos,
       },
     } = activeTemplate;
+
+    const visualPolicy = getTemplateVisualPolicy(templateType);
+    const effectivePrimaryImage = usablePlayerImageSrc(playerImageSrc);
+    const effectiveSecondaryImage = usablePlayerImageSrc(secondaryPlayerImageSrc);
+    const effectiveLogos = logos.map((logo) => ({
+      ...logo,
+      src: usableLogoSrc(logo.src),
+    }));
+    const backgroundLogo = visualPolicy.backgroundLogoIndex === undefined
+      ? null
+      : effectiveLogos[visualPolicy.backgroundLogoIndex] || null;
+    const foregroundLogos = visualPolicy.backgroundLogoIndex === undefined
+      ? effectiveLogos
+      : effectiveLogos.filter((_, index) => index !== visualPolicy.backgroundLogoIndex);
 
     const outputLanguage = useOutputLanguage();
     const localizedContentRef = useRef<HTMLDivElement>(null);
@@ -118,9 +138,11 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           grainOpacity={advancedLayout?.grainOpacity}
         />
 
-        {playerImageSrc && (
+        <BackgroundCrestLayer logo={backgroundLogo} />
+
+        {visualPolicy.renderPrimaryAsGlobalLayer && effectivePrimaryImage && (
           <PlayerPhotoLayer
-            imageSrc={playerImageSrc}
+            imageSrc={effectivePrimaryImage}
             transform={imageTransform}
             bgBottomColor={theme.bg2}
             accentColor={theme.primaryAccent}
@@ -128,9 +150,9 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           />
         )}
 
-        {secondaryPlayerImageSrc && secondaryImageTransform && (
+        {visualPolicy.renderSecondaryAsGlobalLayer && effectiveSecondaryImage && secondaryImageTransform && (
           <PlayerPhotoLayer
-            imageSrc={secondaryPlayerImageSrc}
+            imageSrc={effectiveSecondaryImage}
             transform={secondaryImageTransform}
             bgBottomColor={theme.bg2}
             accentColor={theme.secondaryAccent}
@@ -139,7 +161,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           />
         )}
 
-        <LogosLayer logos={logos} />
+        <LogosLayer logos={foregroundLogos} />
 
         <div
           key={`card-language-${outputLanguage}`}
