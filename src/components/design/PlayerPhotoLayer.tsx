@@ -80,20 +80,21 @@ export const PlayerPhotoLayer: React.FC<PlayerPhotoLayerProps> = ({
             e.currentTarget.style.display = 'none';
           }}
         />
-
-        {transform.bottomFade && (
-          <div
-            className="absolute bottom-0 left-0 right-0 h-[220px] pointer-events-none"
-            style={{
-              background: `linear-gradient(to top,
-                ${bgBottomColor} 0%,
-                ${bgBottomColor}E6 25%,
-                ${bgBottomColor}80 60%,
-                transparent 100%)`,
-            }}
-          />
-        )}
       </div>
+
+      {transform.bottomFade && (
+        <div
+          className="absolute inset-x-0 bottom-0 h-[28%] min-h-[180px] pointer-events-none z-20"
+          style={{
+            background: `linear-gradient(to top,
+              ${bgBottomColor} 0%,
+              ${bgBottomColor}F2 20%,
+              ${bgBottomColor}B8 46%,
+              ${bgBottomColor}54 72%,
+              transparent 100%)`,
+          }}
+        />
+      )}
     </div>
   );
 };
