@@ -21,8 +21,13 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
   const [results, setResults] = useState<ClubSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLogoUrl, setSelectedLogoUrl] = useState(currentLogoUrl || '');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchSequence = useRef(0);
+
+  useEffect(() => {
+    setSelectedLogoUrl(currentLogoUrl || '');
+  }, [currentLogoUrl]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -82,20 +87,34 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
 
   const handleSelect = (club: ClubSearchResult) => {
     if (!club.logoUrl) return;
+    setSelectedLogoUrl(club.logoUrl);
     setIsOpen(false);
     setQuery('');
     setResults([]);
     onSelect(club.logoUrl);
   };
 
+  const handleRemove = () => {
+    setSelectedLogoUrl('');
+    onRemove();
+  };
+
+  const effectiveLogoUrl = currentLogoUrl || selectedLogoUrl;
+
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div className="flex gap-2 items-center">
-        {currentLogoUrl ? (
-          <div className="flex items-center gap-2 p-2 bg-black/60 rounded border border-neutral-700 flex-1">
-            <img src={currentLogoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+        {effectiveLogoUrl ? (
+          <div className="flex items-center gap-2 p-2 bg-black/60 rounded border border-neutral-700 flex-1" data-club-logo-selected="true">
+            <img
+              src={effectiveLogoUrl}
+              alt="Logo"
+              className="w-8 h-8 object-contain"
+              referrerPolicy="no-referrer"
+              onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+            />
             <span className="text-xs text-white truncate flex-1">{label} (Selected)</span>
-            <button onClick={onRemove} className="p-1 hover:text-red-400 text-neutral-400">
+            <button onClick={handleRemove} className="p-1 hover:text-red-400 text-neutral-400">
               <IconX size={14} />
             </button>
           </div>
@@ -120,7 +139,7 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
         )}
       </div>
 
-      {isOpen && !currentLogoUrl && (
+      {isOpen && !effectiveLogoUrl && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-50 overflow-hidden">
           <div className="p-2 border-b border-neutral-800 flex items-center gap-2">
             <IconSearch size={14} className="text-neutral-400" />
@@ -152,8 +171,8 @@ export const ClubLogoSelector: React.FC<Props> = ({ currentLogoUrl, label, onSel
                     src={club.logoUrl}
                     alt={club.name}
                     className="w-6 h-6 object-contain bg-white/10 rounded-sm p-0.5"
-                    crossOrigin={club.logoUrl.startsWith('http') ? 'anonymous' : undefined}
                     referrerPolicy="no-referrer"
+                    onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
                   />
                 )}
                 <div>
