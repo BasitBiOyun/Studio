@@ -101,8 +101,8 @@ async function runPhase2Interactions(page) {
   await arsenalResult.click();
   await page.locator('[data-club-logo-selected="true"]').first().waitFor({ state: 'visible', timeout: 5_000 });
 
-  const selectedLogoCount = await page.locator('#scouting-graphic-root .moveable-target img').count();
-  if (selectedLogoCount < 1) throw new Error('Phase 2: selected Arsenal logo did not reach the graphic canvas.');
+  const canvasLogo = page.locator('#scouting-graphic-root .moveable-target img').first();
+  await canvasLogo.waitFor({ state: 'attached', timeout: 5_000 });
 
   const brandLogo = page.locator('#scouting-graphic-root img[alt="BasitBiOyun"]').first();
   await brandLogo.waitFor({ state: 'attached', timeout: 5_000 });
