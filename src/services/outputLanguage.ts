@@ -1,3 +1,5 @@
+import { localizeFootballValue, turkishUppercase } from './footballLocale';
+
 export type OutputLanguage = 'en' | 'tr';
 
 const STORAGE_KEY = 'basitbioyun-studio-output-language';
@@ -9,8 +11,8 @@ const EXACT_TR: Record<string, string> = {
   Age: 'Yaş',
   Foot: 'Ayak',
   Height: 'Boy',
-  'Right Foot': 'Sağ',
-  'Left Foot': 'Sol',
+  'Right Foot': 'Sağ Ayak',
+  'Left Foot': 'Sol Ayak',
   Right: 'Sağ',
   Left: 'Sol',
   Both: 'İki Ayak',
@@ -23,19 +25,27 @@ const EXACT_TR: Record<string, string> = {
   'Development Areas': 'Gelişim Alanları',
   'DEVELOPMENT AREAS': 'GELİŞİM ALANLARI',
   'Scout Verdict': 'Scout Değerlendirmesi',
+  'Scouting Report': 'Scout Raporu',
+  'PLAYER SCOUTING REPORT': 'OYUNCU SCOUT RAPORU',
   'Head-to-Head • Analytical Comparison': 'Bire Bir • Analitik Karşılaştırma',
   'ANALYTICAL VERDICT': 'ANALİTİK DEĞERLENDİRME',
   'Departing Club': 'Ayrıldığı Kulüp',
   'New Club': 'Yeni Kulüp',
+  'From Club': 'Ayrıldığı Kulüp',
+  'To Club': 'Yeni Kulüp',
   'Transfer Fee': 'Bonservis',
   'Contract Terms': 'Sözleşme',
-  'TRANSFER UPDATE': 'TRANSFER GÜNCELLEMESİ',
-  'OFFICIAL TRANSFER': 'RESMİ TRANSFER',
+  'TRANSFER AGREEMENT': 'TRANSFER',
+  'AGREEMENT REACHED': 'TRANSFER',
+  'TRANSFER UPDATE': 'TRANSFER',
+  'OFFICIAL TRANSFER': 'TRANSFER',
+  'HERE WE GO!': 'TRANSFER',
+  'HERE WE GO': 'TRANSFER',
   'OLD CLUB': 'ESKİ KULÜP',
   'NEW CLUB': 'YENİ KULÜP',
   'Agreement completed': 'Anlaşma tamamlandı',
   'Medical passed': 'Sağlık kontrolü tamamlandı',
-  'Total agreement reached between clubs.': 'Kulüpler arasında tam anlaşma sağlandı.',
+  'Total agreement reached between clubs.': 'Kulüpler arasında anlaşma sağlandı.',
   'KEY TACTICAL BATTLE': 'KİLİT TAKTİK EŞLEŞME',
   'TACTICAL DECIDER': 'TAKTİK ANAHTAR',
   'TACTICAL DECIDERS': 'TAKTİK ANAHTARLAR',
@@ -43,6 +53,7 @@ const EXACT_TR: Record<string, string> = {
   'Key Match Metrics': 'Temel Maç Verileri',
   'Key Takeaways': 'Öne Çıkan Noktalar',
   'PLAYER OF THE MATCH': 'MAÇIN OYUNCUSU',
+  'MAN OF THE MATCH': 'MAÇIN OYUNCUSU',
   'CORE TACTICAL CONCEPT': 'ANA TAKTİK FİKİR',
   'CORE PRINCIPLES': 'ANA PRENSİPLER',
   'EXECUTION TRIGGERS': 'UYGULAMA TETİKLEYİCİLERİ',
@@ -67,15 +78,32 @@ const EXACT_TR: Record<string, string> = {
   'EDITORIAL THREAD': 'ANALİZ SERİSİ',
   'Football Editorial Analytics': 'Futbol Analizleri',
   'Expected Goals (xG)': 'Beklenen Gol (xG)',
+  'Expected Assists (xA)': 'Beklenen Asist (xA)',
   'Possession %': 'Topa Sahip Olma %',
   'Key Passes /90': 'Kilit Pas /90',
   'Progressive Carries /90': 'İleri Taşıma /90',
   'Shots /90': 'Şut /90',
+  'Shots on Target': 'İsabetli Şut',
+  'Total Shots': 'Toplam Şut',
+  'Pass Accuracy': 'Pas İsabeti',
+  'Long Ball Accuracy': 'Uzun Pas İsabeti',
   'In Possession': 'Topa Sahipken',
   'Out of Possession': 'Topsuz Oyunda',
   'Defensive Transition': 'Savunma Geçişi',
   'Attacking Transition': 'Hücum Geçişi',
   'FINAL': 'FİNAL',
+  'FINAL THIRD': 'HÜCUM ÜÇÜNCÜ BÖLGESİ',
+  'TEAM PROFILE': 'TAKIM PROFİLİ',
+  'Strengths': 'Güçlü Yönler',
+  'Weaknesses': 'Zayıf Yönler',
+  'Manager': 'Teknik Direktör',
+  'League': 'Lig',
+  'Formation': 'Diziliş',
+  'Season': 'Sezon',
+  'Competition': 'Organizasyon',
+  'Match Date': 'Maç Tarihi',
+  'Kickoff': 'Başlama Saati',
+  'Venue': 'Stadyum',
 };
 
 const PHRASE_TR: Array<[RegExp, string]> = [
@@ -99,11 +127,29 @@ const PHRASE_TR: Array<[RegExp, string]> = [
   [/\bPRINCIPLE\s+(\d+)\b/gi, 'PRENSİP $1'],
   [/\b(\d+)\s+Y\/O\b/gi, '$1 YAŞ'],
   [/\b(\d+)-YEAR CONTRACT\b/gi, '$1 YILLIK SÖZLEŞME'],
+  [/\bUNTIL\s+(\d{4})\b/gi, "$1'E KADAR"],
   [/\b(\d+)(?:ST|ND|RD|TH) PLACE\b/gi, '$1. SIRA'],
   [/\bROUND OF 16\b/gi, 'SON 16'],
   [/\bQUARTER-?FINAL\b/gi, 'ÇEYREK FİNAL'],
   [/\bSEMI-?FINAL\b/gi, 'YARI FİNAL'],
+  [/\bMATCHDAY\s+(\d+)\b/gi, '$1. HAFTA'],
+  [/\b1ST IN\b/gi, '1. SIRA •'],
+  [/\b2ND IN\b/gi, '2. SIRA •'],
+  [/\b3RD IN\b/gi, '3. SIRA •'],
+  [/\bTRANSFER AGREEMENT\b/gi, 'TRANSFER'],
+  [/\bAGREEMENT REACHED\b/gi, 'TRANSFER'],
+  [/\bHERE WE GO!?\b/gi, 'TRANSFER'],
 ];
+
+function isUppercaseContext(node: Text, root: HTMLElement) {
+  let element: HTMLElement | null = node.parentElement;
+  while (element && element !== root.parentElement) {
+    if (element.classList.contains('uppercase')) return true;
+    if (element === root) break;
+    element = element.parentElement;
+  }
+  return false;
+}
 
 export function getOutputLanguage(): OutputLanguage {
   if (typeof window === 'undefined') return memoryLanguage;
@@ -136,6 +182,7 @@ export function translateCardText(text: string, language: OutputLanguage): strin
   if (!core) return text;
 
   let translated = EXACT_TR[core] || core;
+  translated = localizeFootballValue(translated);
   for (const [pattern, replacement] of PHRASE_TR) {
     translated = translated.replace(pattern, replacement);
   }
@@ -160,7 +207,10 @@ export function localizeCardElement(root: HTMLElement, language: OutputLanguage)
 
   for (const textNode of textNodes) {
     const current = textNode.nodeValue || '';
-    const translated = translateCardText(current, language);
+    let translated = translateCardText(current, language);
+    if (isUppercaseContext(textNode, root)) {
+      translated = turkishUppercase(translated);
+    }
     if (translated !== current) textNode.nodeValue = translated;
   }
 }
