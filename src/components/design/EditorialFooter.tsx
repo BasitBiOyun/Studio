@@ -1,6 +1,8 @@
 import React from 'react';
 import { Credits, ThemeColors, VisualMode } from '../../types';
 
+const brandLogoUrl = new URL('../../assets/basitbioyun-logo.jpg', import.meta.url).href;
+
 interface EditorialFooterProps {
   credits: Credits;
   theme: ThemeColors;
@@ -31,8 +33,14 @@ export const EditorialFooter: React.FC<EditorialFooterProps> = ({
       </div>
 
       {/* Right Brand Badge */}
-      <div className="flex items-center gap-2.5">
-        <span className="text-[15px] font-black tracking-widest text-neutral-300">
+      <div className="relative h-[18px] flex items-center pl-[46px]">
+        <img
+          src={brandLogoUrl}
+          alt="BasitBiOyun"
+          draggable={false}
+          className="pointer-events-none absolute left-0 bottom-0 w-[40px] h-[40px] object-cover select-none"
+        />
+        <span className="text-[15px] leading-[18px] font-black tracking-widest text-neutral-300 whitespace-nowrap">
           {credits.visualBy || 'Visual by @BasitBiOyun'}
         </span>
       </div>
