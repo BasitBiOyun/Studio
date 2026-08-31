@@ -1,0 +1,27 @@
+{
+  "roadmapVersion": 1,
+  "branch": "main",
+  "currentPhase": 3,
+  "phases": {
+    "3": "pending",
+    "4": "pending",
+    "5": "pending",
+    "6": "pending",
+    "7": "pending",
+    "8": "pending",
+    "9": "pending",
+    "10": "pending",
+    "11": "pending",
+    "12": "pending",
+    "13": "pending",
+    "14": "pending"
+  },
+  "rules": {
+    "mainOnly": true,
+    "noWorkflowReruns": true,
+    "noPollingCommits": true,
+    "maxMeaningfulCommitsPerRun": 1,
+    "waitWhenCiPending": true,
+    "advanceOnlyAfterCiVisualQaAndVercelPass": true
+  }
+}
