@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { Project, CanvasDimensions } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { BackgroundPattern } from './design/BackgroundPattern';
@@ -6,6 +6,7 @@ import { PlayerPhotoLayer } from './design/PlayerPhotoLayer';
 import { LogosLayer } from './design/LogosLayer';
 import { useOutputLanguage } from '../hooks/useOutputLanguage';
 import { localizeCardElement } from '../services/outputLanguage';
+import { attachTransferClubAutocomplete } from '../services/transferClubAutocomplete';
 
 import { ScoutingReportView } from './templates/ScoutingReportView';
 import { PlayerComparisonView } from './templates/PlayerComparisonView';
@@ -49,6 +50,11 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
       localizeCardElement(localizedContentRef.current, outputLanguage);
     }, [outputLanguage, project]);
 
+    useEffect(() => {
+      if (templateType !== 'transfer-graphic') return;
+      return attachTransferClubAutocomplete();
+    }, [templateType]);
+
     const dimensions: CanvasDimensions = CANVAS_DIMENSIONS[aspectRatio] || CANVAS_DIMENSIONS['1:1'];
     const directEditingEnabled = interactive && !advancedLayout?.locked;
 
@@ -86,7 +92,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
       <div
         ref={ref}
         id="scouting-graphic-root"
-        lang={outputLanguage}
+        lang={outputLanguage === 'tr' ? 'tr-TR' : 'en'}
         className="relative select-none overflow-hidden"
         style={{
           width: `${dimensions.width}px`,
