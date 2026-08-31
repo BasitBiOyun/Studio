@@ -61,7 +61,18 @@ const upscaler = read('src/services/clientUpscaler.ts');
 assert.ok(!upscaler.includes('cdn.jsdelivr.net'), 'Enhancer must not hang on remote model/runtime downloads.');
 assert.ok(upscaler.includes("imageSmoothingQuality = 'high'"));
 assert.ok(upscaler.includes("toDataURL('image/png'"));
-assert.ok(upscaler.includes('subtleSharpen'));
+assert.ok(upscaler.includes('yieldToBrowser'));
+assert.ok(!upscaler.includes('getImageData'), 'Enhancer must not run a full-resolution pixel convolution on the main thread.');
 assert.ok(upscaler.includes('sourceWidth * 2'));
+
+const logosLayer = read('src/components/design/LogosLayer.tsx');
+assert.ok(!logosLayer.includes('crossOrigin='), 'Remote club logos should render even when the source does not expose CORS headers.');
+
+const matchAnalysis = read('src/components/templates/MatchAnalysisView.tsx');
+const tacticalAnalysis = read('src/components/templates/TacticalAnalysisView.tsx');
+const matchResult = read('src/components/templates/MatchResultView.tsx');
+assert.ok(!matchAnalysis.includes('col-span-4 h-full pointer-events-none'), 'Match Analysis must use the full canvas width.');
+assert.ok(!tacticalAnalysis.includes('col-span-4 h-full pointer-events-none'), 'Tactical Analysis must use the full canvas width.');
+assert.ok(matchResult.includes('grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'), 'Match Result scorers must stay grouped beneath their team names.');
 
 console.log('Visual infrastructure self-test passed.');
