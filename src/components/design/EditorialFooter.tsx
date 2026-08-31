@@ -6,7 +6,7 @@ import {
   IconBrandYoutube,
 } from '@tabler/icons-react';
 import { Credits, ThemeColors, VisualMode } from '../../types';
-import brandLogoUrl from '../../assets/basitbioyun-logo.jpg';
+import brandLogoUrl from '../../assets/basitbioyunLogoData';
 
 export type FooterSocialKey = 'x' | 'youtube' | 'tiktok' | 'instagram';
 
@@ -88,10 +88,6 @@ export const EditorialFooter: React.FC<EditorialFooterProps> = ({
           alt="BasitBiOyun"
           draggable={false}
           className="pointer-events-none absolute right-0 bottom-[-3px] w-[72px] h-[72px] object-cover select-none rounded-[3px]"
-          onError={(event) => {
-            console.error('BasitBiOyun brand logo failed to load.', brandLogoUrl);
-            event.currentTarget.style.visibility = 'hidden';
-          }}
         />
       </div>
     </div>
