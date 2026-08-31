@@ -39,7 +39,7 @@ export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const team1Form = visibleMatchForm(data.team1.form);
   const team2Form = visibleMatchForm(data.team2.form);
   const tacticalKeys = visibleTacticalKeys(data.tacticalKeys);
