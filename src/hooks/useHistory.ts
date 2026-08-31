@@ -1,54 +1,67 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Project } from '../types';
 
 const MAX_HISTORY = 50;
 
-export function useHistory(initialProject: Project) {
-  const [history, setHistory] = useState<Project[]>([initialProject]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+interface HistoryState {
+  history: Project[];
+  currentIndex: number;
+}
 
-  const currentProject = history[currentIndex] ?? initialProject;
+export function useHistory(initialProject: Project) {
+  const [state, setState] = useState<HistoryState>({
+    history: [initialProject],
+    currentIndex: 0,
+  });
+
+  const currentProject = state.history[state.currentIndex] ?? initialProject;
 
   const pushState = useCallback((newProject: Project, replaceCurrent = false) => {
-    setHistory((previousHistory) => {
+    setState((previous) => {
+      const current = previous.history[previous.currentIndex];
+
       if (replaceCurrent) {
-        const nextHistory = [...previousHistory];
-        nextHistory[currentIndex] = newProject;
-        return nextHistory;
+        if (current && JSON.stringify(current) === JSON.stringify(newProject)) return previous;
+        const nextHistory = [...previous.history];
+        nextHistory[previous.currentIndex] = newProject;
+        return { history: nextHistory, currentIndex: previous.currentIndex };
       }
 
-      const current = previousHistory[currentIndex];
-      if (current && JSON.stringify(current) === JSON.stringify(newProject)) {
-        return previousHistory;
-      }
+      if (current && JSON.stringify(current) === JSON.stringify(newProject)) return previous;
 
-      const nextHistory = [
-        ...previousHistory.slice(0, currentIndex + 1),
+      let nextHistory = [
+        ...previous.history.slice(0, previous.currentIndex + 1),
         newProject,
       ];
 
-      return nextHistory.length > MAX_HISTORY
-        ? nextHistory.slice(nextHistory.length - MAX_HISTORY)
-        : nextHistory;
-    });
+      if (nextHistory.length > MAX_HISTORY) {
+        nextHistory = nextHistory.slice(nextHistory.length - MAX_HISTORY);
+      }
 
-    if (!replaceCurrent) {
-      setCurrentIndex((index) => Math.min(index + 1, MAX_HISTORY - 1));
-    }
-  }, [currentIndex]);
+      return {
+        history: nextHistory,
+        currentIndex: nextHistory.length - 1,
+      };
+    });
+  }, []);
 
   const resetHistory = useCallback((project: Project) => {
-    setHistory([project]);
-    setCurrentIndex(0);
+    setState({ history: [project], currentIndex: 0 });
   }, []);
 
   const undo = useCallback(() => {
-    setCurrentIndex((index) => Math.max(index - 1, 0));
+    setState((previous) => ({
+      ...previous,
+      currentIndex: Math.max(previous.currentIndex - 1, 0),
+    }));
   }, []);
 
   const redo = useCallback(() => {
-    setCurrentIndex((index) => Math.min(index + 1, history.length - 1));
-  }, [history.length]);
+    setState((previous) => ({
+      ...previous,
+      currentIndex: Math.min(previous.currentIndex + 1, previous.history.length - 1),
+    }));
+  }, []);
 
   return {
     currentProject,
@@ -56,7 +69,7 @@ export function useHistory(initialProject: Project) {
     resetHistory,
     undo,
     redo,
-    canUndo: currentIndex > 0,
-    canRedo: currentIndex < history.length - 1,
+    canUndo: state.currentIndex > 0,
+    canRedo: state.currentIndex < state.history.length - 1,
   };
 }
