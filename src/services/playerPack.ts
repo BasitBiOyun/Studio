@@ -4,6 +4,7 @@ import { CLUB_LIBRARY } from '../constants/clubs';
 import { PlayerPackSchema } from './schema';
 import { StudioPackV1, applyStudioPackToProject, parseStudioPack } from './studioPack';
 import { migrateImportPack } from './dataPackMigrations';
+import { resolveCountryFlag } from './footballLocale';
 
 export type ImportableDataPack = PlayerPackV1 | StudioPackV1;
 
@@ -14,12 +15,16 @@ function getNationalityName(value: any): string {
 
 function getCountryCode(player: any): string | undefined {
   const direct = player.countryCode || player.nationalityCode;
-  if (direct) return String(direct).toLowerCase();
+  if (direct) {
+    const resolved = resolveCountryFlag(getNationalityName(player.nationality), String(direct));
+    if (resolved) return resolved;
+  }
   if (player.nationality && typeof player.nationality === 'object' && player.nationality.code) {
-    return String(player.nationality.code).toLowerCase();
+    const resolved = resolveCountryFlag(getNationalityName(player.nationality), String(player.nationality.code));
+    if (resolved) return resolved;
   }
   const nationality = getNationalityName(player.nationality);
-  return COUNTRIES.find((country) => country.name.toLowerCase() === nationality.toLowerCase())?.code;
+  return resolveCountryFlag(nationality) || COUNTRIES.find((country) => country.name.toLowerCase() === nationality.toLowerCase())?.flag;
 }
 
 function getClubName(value: any): string {
@@ -82,9 +87,40 @@ function normalizeStat(stat: any, index: number, pack: any): StatItem {
   };
 }
 
+function finalizeStudioScoutingImport(project: Project, rawPack: any): Project {
+  if (rawPack?.templateType !== 'player-scouting') return project;
+
+  const rawPlayer = rawPack.data?.player || {};
+  const nationality = getNationalityName(rawPlayer.nationality) || project.sharedData.player.nationality;
+  const countryFlag = getCountryCode(rawPlayer) || resolveCountryFlag(nationality, project.sharedData.player.countryFlag);
+
+  project.sharedData.player = {
+    ...project.sharedData.player,
+    nationality,
+    ...(countryFlag ? { countryFlag } : {}),
+  };
+
+  const scoutingTemplate = project.templates['scouting-report'];
+  if (scoutingTemplate) {
+    if (rawPack.data?.headline) {
+      (scoutingTemplate.content as any).scoutingHeadline = rawPack.data.headline;
+    }
+    (scoutingTemplate.content as any).dataProvenance = {
+      ...((scoutingTemplate.content as any).dataProvenance || {}),
+      schemaVersion: 'studio-pack-v1',
+      context: rawPack.context,
+      sources: rawPack.sources || [],
+      importedAt: new Date().toISOString(),
+    };
+  }
+
+  return project;
+}
+
 export function applyPlayerPackToProject(project: Project, pack: ImportableDataPack): Project {
   if ((pack as any).schemaVersion === 'studio-pack-v1') {
-    return applyStudioPackToProject(project, pack as StudioPackV1);
+    const updated = applyStudioPackToProject(project, pack as StudioPackV1);
+    return finalizeStudioScoutingImport(updated, pack as StudioPackV1);
   }
 
   const rawPack: any = pack;
