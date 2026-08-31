@@ -8,6 +8,7 @@ import {
   getMetricWinner,
   visibleComparisonMetrics,
 } from '../../services/comparison';
+import { usablePlayerImageSrc } from '../../services/templateVisualPolicy';
 
 interface TemplateProps {
   project: Project;
@@ -19,10 +20,35 @@ function playerMeta(player: PlayerInfo): string {
     .join(' • ');
 }
 
+function playerNameSize(name: string, isWide: boolean): number {
+  const length = String(name || '').trim().length;
+  if (length > 19) return isWide ? 28 : 32;
+  if (length > 14) return isWide ? 32 : 36;
+  return isWide ? 36 : 44;
+}
+
+function PlayerAvatar({ src, accent, label, isWide }: { src: string; accent: string; label: string; isWide: boolean }) {
+  if (!src) return null;
+  return (
+    <div
+      className={`${isWide ? 'w-20 h-20' : 'w-24 h-24'} rounded-full overflow-hidden border-2 flex-shrink-0 bg-black/30 shadow-xl`}
+      style={{ borderColor: `${accent}80` }}
+    >
+      <img
+        src={src}
+        alt={label}
+        className="w-full h-full object-contain object-bottom"
+        crossOrigin={src.startsWith('http') ? 'anonymous' : undefined}
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+}
+
 export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['player-comparison'];
   const { credits } = project.sharedData;
-  const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
+  const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
   const { comparisonData } = templateContent;
   const data = comparisonData || {
     player1: project.sharedData.player,
@@ -48,10 +74,11 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   const subtitle = contextSubtitle || data.subtitle;
   const metrics = visibleComparisonMetrics(data.metrics);
   const player2Accent = theme.secondaryAccent || '#94a3b8';
+  const player1Image = usablePlayerImageSrc(visuals.playerImageSrc);
+  const player2Image = usablePlayerImageSrc(visuals.secondaryPlayerImageSrc);
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : 'p-14 md:p-16'} select-none`}>
-      {/* Header */}
       <EditorialHeader
         categoryBadge="Head-to-Head • Analytical Comparison"
         title={`${data.player1.name} VS ${data.player2.name}`}
@@ -60,24 +87,28 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
         fontDisplay={fontDisplay}
       />
 
-      {/* Main Comparison Area */}
       <div className={`flex-1 ${isWide ? 'my-3 gap-3' : 'my-6 gap-6'} flex flex-col justify-center max-w-[2000px] mx-auto w-full`}>
-        {/* Player Cards */}
         <div className={`grid grid-cols-12 ${isWide ? 'gap-4' : 'gap-8'} items-center`}>
           <div
-            className={`col-span-5 rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl flex items-center justify-between`}
+            className={`col-span-5 rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl flex items-center gap-4`}
             style={{
               backgroundColor: 'rgba(10, 14, 26, 0.85)',
               borderColor: `${theme.primaryAccent}40`,
             }}
           >
-            <div>
+            <PlayerAvatar
+              src={player1Image}
+              accent={theme.primaryAccent}
+              label={`${data.player1.name} portrait`}
+              isWide={isWide}
+            />
+            <div className="min-w-0 flex-1">
               <div className="text-[12px] font-black uppercase tracking-widest text-neutral-400">
                 {playerMeta(data.player1)}
               </div>
               <div
-                className="text-[44px] font-black uppercase tracking-tight text-white leading-tight"
-                style={{ fontFamily: fontDisplay }}
+                className="font-black uppercase tracking-tight text-white leading-tight break-words"
+                style={{ fontFamily: fontDisplay, fontSize: playerNameSize(data.player1.name, isWide) }}
               >
                 {data.player1.name}
               </div>
@@ -104,19 +135,19 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
           </div>
 
           <div
-            className={`col-span-5 rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl flex items-center justify-between text-right`}
+            className={`col-span-5 rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl flex items-center gap-4 text-right`}
             style={{
               backgroundColor: 'rgba(10, 14, 26, 0.85)',
               borderColor: `${player2Accent}55`,
             }}
           >
-            <div className="w-full">
+            <div className="min-w-0 flex-1">
               <div className="text-[12px] font-black uppercase tracking-widest text-neutral-400">
                 {playerMeta(data.player2)}
               </div>
               <div
-                className="text-[44px] font-black uppercase tracking-tight text-white leading-tight"
-                style={{ fontFamily: fontDisplay }}
+                className="font-black uppercase tracking-tight text-white leading-tight break-words"
+                style={{ fontFamily: fontDisplay, fontSize: playerNameSize(data.player2.name, isWide) }}
               >
                 {data.player2.name}
               </div>
@@ -127,10 +158,15 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
                 {data.player2.club}
               </div>
             </div>
+            <PlayerAvatar
+              src={player2Image}
+              accent={player2Accent}
+              label={`${data.player2.name} portrait`}
+              isWide={isWide}
+            />
           </div>
         </div>
 
-        {/* Maximum 5 comparison metrics keeps the graphic readable at a glance. */}
         <div
           className={`rounded-2xl ${isWide ? 'p-4 gap-2' : 'p-6 gap-4'} border backdrop-blur-md flex flex-col shadow-2xl`}
           style={{
@@ -184,7 +220,6 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
           })}
         </div>
 
-        {/* Verdict explains profile differences rather than declaring a generic winner. */}
         {data.verdictText && (
           <div
             className="rounded-2xl p-5 border backdrop-blur-md flex items-start gap-4 shadow-xl"
