@@ -71,7 +71,6 @@ async function closeTemplates(page, viewport) {
 }
 
 async function runPhase2Interactions(page) {
-  // Sidebar drag-resize should change its actual rendered width without breaking the canvas.
   const sidebar = page.locator('.bbo-sidebar-v3').first();
   const separator = page.getByRole('separator', { name: 'Resize editor sidebar' }).first();
   const before = await sidebar.boundingBox();
@@ -85,13 +84,11 @@ async function runPhase2Interactions(page) {
   const after = await sidebar.boundingBox();
   if (!after || after.width < before.width + 40) throw new Error(`Phase 2: sidebar resize did not expand (${before.width} -> ${after?.width}).`);
 
-  // Whole-Studio language toggle, not only the rendered card.
   await page.getByRole('button', { name: 'TR', exact: true }).click();
   await page.getByRole('button', { name: 'Şablonlar', exact: true }).waitFor({ state: 'visible' });
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await page.getByRole('button', { name: 'Templates', exact: true }).waitFor({ state: 'visible' });
 
-  // Real club selection must survive the update and appear as selected instead of being erased by stale state.
   await page.getByRole('button', { name: 'Templates', exact: true }).click();
   await page.getByRole('button', { name: 'Transfer Graphic', exact: false }).first().click();
   await page.getByRole('button', { name: 'Visuals', exact: true }).click();
@@ -102,18 +99,16 @@ async function runPhase2Interactions(page) {
   const arsenalResult = page.locator('button').filter({ hasText: /^Arsenal/ }).first();
   await arsenalResult.waitFor({ state: 'visible', timeout: 5_000 });
   await arsenalResult.click();
-  await page.getByText('From Club Logo (Selected)', { exact: true }).waitFor({ state: 'visible', timeout: 5_000 });
+  await page.locator('[data-club-logo-selected="true"]').first().waitFor({ state: 'visible', timeout: 5_000 });
 
   const selectedLogoCount = await page.locator('#scouting-graphic-root .moveable-target img').count();
   if (selectedLogoCount < 1) throw new Error('Phase 2: selected Arsenal logo did not reach the graphic canvas.');
 
-  // Fixed brand logo must resolve to a real bundled image.
   const brandLogo = page.locator('#scouting-graphic-root img[alt="BasitBiOyun"]').first();
   await brandLogo.waitFor({ state: 'attached', timeout: 5_000 });
   const brandOk = await brandLogo.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0);
   if (!brandOk) throw new Error('Phase 2: bundled BasitBiOyun footer logo is broken.');
 
-  // Social footer replaced the old Football Editorial Analytics attribution.
   const footerText = await page.locator('#scouting-graphic-root').innerText();
   if (footerText.includes('Football Editorial Analytics') || footerText.includes('Futbol Analizleri')) {
     throw new Error('Phase 2: legacy footer attribution is still visible.');
