@@ -15,7 +15,7 @@ const logosLayer = read('src/components/design/LogosLayer.tsx');
 const projectLibrary = read('src/components/ProjectLibraryModal.tsx');
 const storage = read('src/services/storage.ts');
 const exporter = read('src/services/exporter.ts');
-const sidebar = read('src/components/EditorSidebarV2.tsx');
+const sidebar = read('src/components/EditorSidebarV3.tsx');
 
 assert.ok(
   !app.includes('currentProject.imageTransform'),
@@ -95,6 +95,10 @@ assert.ok(
   'Optional image tooling must stay lazy-loaded and free client-side upscale must remain wired.',
 );
 assert.ok(
+  sidebar.includes("await import('node-vibrant/browser')") && sidebar.includes('Apply the generated palette to this template?'),
+  'Palette extraction must stay lazy-loaded and guarded by confirmation.',
+);
+assert.ok(
   sidebar.includes('getTemplateVisualPolicy') && sidebar.includes('templatePackLabel(project.templateType)'),
   'Sidebar data and visuals must follow the active template.',
 );
@@ -147,4 +151,4 @@ for (const template of expectedTemplateCases) {
   assert.ok(card.includes(`case '${template}'`) || template === 'scouting-report', `Renderer missing template: ${template}`);
 }
 
-console.log('Core editor self-test passed: project storage, template-aware Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
+console.log('Core editor self-test passed: project storage, phase-2 Visuals runtime, direct editing, QA and SnapDOM export safeguards.');
