@@ -70,6 +70,59 @@ async function closeTemplates(page, viewport) {
   }
 }
 
+async function runPhase2Interactions(page) {
+  // Sidebar drag-resize should change its actual rendered width without breaking the canvas.
+  const sidebar = page.locator('.bbo-sidebar-v3').first();
+  const separator = page.getByRole('separator', { name: 'Resize editor sidebar' }).first();
+  const before = await sidebar.boundingBox();
+  const grip = await separator.boundingBox();
+  if (!before || !grip) throw new Error('Phase 2: resize handle/sidebar bounds unavailable.');
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + 80);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2 + 70, grip.y + 80, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(120);
+  const after = await sidebar.boundingBox();
+  if (!after || after.width < before.width + 40) throw new Error(`Phase 2: sidebar resize did not expand (${before.width} -> ${after?.width}).`);
+
+  // Whole-Studio language toggle, not only the rendered card.
+  await page.getByRole('button', { name: 'TR', exact: true }).click();
+  await page.getByRole('button', { name: 'Şablonlar', exact: true }).waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: 'EN', exact: true }).click();
+  await page.getByRole('button', { name: 'Templates', exact: true }).waitFor({ state: 'visible' });
+
+  // Real club selection must survive the update and appear as selected instead of being erased by stale state.
+  await page.getByRole('button', { name: 'Templates', exact: true }).click();
+  await page.getByRole('button', { name: 'Transfer Graphic', exact: false }).first().click();
+  await page.getByRole('button', { name: 'Visuals', exact: true }).click();
+  await page.getByRole('button', { name: 'Search Club Database', exact: true }).first().click();
+  const searchInput = page.locator('input[placeholder="e.g. Liverpool, Fenerbahçe..."]').first();
+  await searchInput.fill('Arsenal');
+  await page.waitForTimeout(150);
+  const arsenalResult = page.locator('button').filter({ hasText: /^Arsenal/ }).first();
+  await arsenalResult.waitFor({ state: 'visible', timeout: 5_000 });
+  await arsenalResult.click();
+  await page.getByText('From Club Logo (Selected)', { exact: true }).waitFor({ state: 'visible', timeout: 5_000 });
+
+  const selectedLogoCount = await page.locator('#scouting-graphic-root .moveable-target img').count();
+  if (selectedLogoCount < 1) throw new Error('Phase 2: selected Arsenal logo did not reach the graphic canvas.');
+
+  // Fixed brand logo must resolve to a real bundled image.
+  const brandLogo = page.locator('#scouting-graphic-root img[alt="BasitBiOyun"]').first();
+  await brandLogo.waitFor({ state: 'attached', timeout: 5_000 });
+  const brandOk = await brandLogo.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0);
+  if (!brandOk) throw new Error('Phase 2: bundled BasitBiOyun footer logo is broken.');
+
+  // Social footer replaced the old Football Editorial Analytics attribution.
+  const footerText = await page.locator('#scouting-graphic-root').innerText();
+  if (footerText.includes('Football Editorial Analytics') || footerText.includes('Futbol Analizleri')) {
+    throw new Error('Phase 2: legacy footer attribution is still visible.');
+  }
+  if (!footerText.includes('@BasitBiOyun')) throw new Error('Phase 2: social footer handles are missing.');
+
+  await page.screenshot({ path: path.join(OUT_DIR, 'desktop-1440__phase2-interactions.png'), fullPage: false });
+}
+
 async function main() {
   await fs.rm(OUT_DIR, { recursive: true, force: true });
   await fs.mkdir(OUT_DIR, { recursive: true });
@@ -118,6 +171,15 @@ async function main() {
         }
       }
 
+      if (viewport.name === 'desktop-1440') {
+        try {
+          await runPhase2Interactions(page);
+        } catch (error) {
+          failures.push(`desktop-1440 / phase-2 interactions: ${error instanceof Error ? error.message : String(error)}`);
+          await page.screenshot({ path: path.join(OUT_DIR, 'desktop-1440__phase2-interactions__FAILED.png'), fullPage: false }).catch(() => {});
+        }
+      }
+
       await context.close();
     }
   } finally {
@@ -130,7 +192,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Visual QA passed: ${viewports.length} viewports × ${templates.length} templates = ${viewports.length * templates.length} screenshots.`);
+  console.log(`Visual QA passed: ${viewports.length} viewports × ${templates.length} templates plus phase-2 interaction checks.`);
 }
 
 main().catch((error) => {
