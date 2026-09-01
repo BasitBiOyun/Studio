@@ -1,4 +1,5 @@
 import { StatItem } from '../types';
+import { fitTextFontSize } from './smartTextFit';
 
 export const MAX_STAT_HIGHLIGHT_CONTEXT_METRICS = 4;
 
@@ -9,32 +10,26 @@ export function visibleStatHighlightMetrics(metrics: StatItem[] = []): StatItem[
 }
 
 export function statHighlightHeroFontSize(value: string, isWide = false): string {
-  const length = String(value || '').trim().length;
-
-  if (isWide) {
-    if (length <= 5) return '104px';
-    if (length <= 8) return '92px';
-    if (length <= 12) return '78px';
-    return '66px';
-  }
-
-  if (length <= 5) return '130px';
-  if (length <= 8) return '116px';
-  if (length <= 12) return '98px';
-  return '82px';
+  return fitTextFontSize({
+    text: value,
+    preferredPx: isWide ? 104 : 130,
+    minPx: isWide ? 66 : 82,
+    maxLines: 1,
+    charsPerLineAtPreferred: 5,
+    lineHeight: 1,
+  });
 }
 
 export function statHighlightSubjectFontSize(subject: string, isWide = false): string {
-  const length = String(subject || '').trim().length;
-  if (isWide) {
-    if (length <= 16) return '70px';
-    if (length <= 28) return '58px';
-    return '48px';
-  }
-
-  if (length <= 16) return '88px';
-  if (length <= 28) return '74px';
-  return '62px';
+  return fitTextFontSize({
+    text: subject,
+    preferredPx: isWide ? 70 : 88,
+    minPx: isWide ? 48 : 62,
+    maxLines: 2,
+    charsPerLineAtPreferred: 8,
+    lineHeight: 0.95,
+    containerHeightPx: isWide ? 145 : 180,
+  });
 }
 
 export function statHighlightSubjectMeta(positions?: string, club?: string): string {
