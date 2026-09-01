@@ -9,6 +9,7 @@ import {
   rankingValueFontSize,
   visibleRankingItems,
 } from '../../services/ranking';
+import { scaledTemplateFontSize } from '../../services/templateTypography';
 
 interface TemplateProps {
   project: Project;
@@ -62,7 +63,7 @@ export const RankingTopListView: React.FC<TemplateProps> = ({ project }) => {
           className="font-black uppercase tracking-tight text-white leading-[0.9] drop-shadow-md"
           style={{
             fontFamily: fontDisplay,
-            fontSize: rankingTitleFontSize(data.categoryTitle, isWide),
+            fontSize: scaledTemplateFontSize(rankingTitleFontSize(data.categoryTitle, isWide), advancedLayout, 'headline', 34, 118),
           }}
         >
           {data.categoryTitle}
@@ -70,10 +71,11 @@ export const RankingTopListView: React.FC<TemplateProps> = ({ project }) => {
 
         {hasSubtitle && (
           <div
-            className={`${isWide ? 'text-[25px]' : 'text-[32px]'} font-bold uppercase tracking-wider mt-1`}
+            className="font-bold uppercase tracking-wider mt-1"
             style={{
               fontFamily: fontDisplay,
               color: theme.primaryAccent,
+              fontSize: scaledTemplateFontSize(isWide ? 25 : 32, advancedLayout, 'subtitle', 18, 44),
             }}
           >
             {data.subtitle}
@@ -128,7 +130,7 @@ export const RankingTopListView: React.FC<TemplateProps> = ({ project }) => {
                     className="font-black uppercase tracking-tight text-white leading-none flex items-center gap-2 min-w-0"
                     style={{
                       fontFamily: fontDisplay,
-                      fontSize: rankingNameFontSize(item.playerName, isWide),
+                      fontSize: scaledTemplateFontSize(rankingNameFontSize(item.playerName, isWide), advancedLayout, 'body', 18, 48),
                     }}
                   >
                     <span className="truncate">{item.playerName}</span>
@@ -147,7 +149,7 @@ export const RankingTopListView: React.FC<TemplateProps> = ({ project }) => {
                     style={{
                       fontFamily: fontDisplay,
                       color: isHighlighted ? theme.primaryAccent : '#ffffff',
-                      fontSize: rankingValueFontSize(item.val, isWide),
+                      fontSize: scaledTemplateFontSize(rankingValueFontSize(item.val, isWide), advancedLayout, 'stat', 24, 64),
                     }}
                   >
                     {item.val}

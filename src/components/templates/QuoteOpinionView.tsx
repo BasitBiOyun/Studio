@@ -8,6 +8,7 @@ import {
   quoteHeaderContext,
   quotePunchlineFontSize,
 } from '../../services/quoteOpinion';
+import { scaledTemplateFontSize } from '../../services/templateTypography';
 
 interface TemplateProps {
   project: Project;
@@ -81,7 +82,7 @@ export const QuoteOpinionView: React.FC<TemplateProps> = ({ project }) => {
                 className="font-bold text-white leading-[1.22] tracking-tight drop-shadow-md"
                 style={{
                   fontFamily: fontBody,
-                  fontSize: quoteBodyFontSize(quote, isWide),
+                  fontSize: scaledTemplateFontSize(quoteBodyFontSize(quote, isWide), advancedLayout, 'headline', 28, 72),
                 }}
               >
                 {quote}
@@ -105,7 +106,7 @@ export const QuoteOpinionView: React.FC<TemplateProps> = ({ project }) => {
                 style={{
                   fontFamily: fontDisplay,
                   color: theme.primaryAccent,
-                  fontSize: quotePunchlineFontSize(punchline, isWide),
+                  fontSize: scaledTemplateFontSize(quotePunchlineFontSize(punchline, isWide), advancedLayout, 'body', 16, 38),
                 }}
               >
                 {punchline}
@@ -120,7 +121,7 @@ export const QuoteOpinionView: React.FC<TemplateProps> = ({ project }) => {
                   className="font-black uppercase tracking-tight text-white leading-none"
                   style={{
                     fontFamily: fontDisplay,
-                    fontSize: quoteAuthorFontSize(authorName, isWide),
+                    fontSize: scaledTemplateFontSize(quoteAuthorFontSize(authorName, isWide), advancedLayout, 'subtitle', 20, 52),
                   }}
                 >
                   {authorName}

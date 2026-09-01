@@ -9,6 +9,7 @@ import {
   threadTopicFontSize,
   visibleThreadTopics,
 } from '../../services/threadCover';
+import { scaledTemplateFontSize } from '../../services/templateTypography';
 
 interface TemplateProps {
   project: Project;
@@ -67,7 +68,7 @@ export const ThreadCoverView: React.FC<TemplateProps> = ({ project }) => {
             className="font-black uppercase tracking-tight text-white leading-[0.88] drop-shadow-xl max-w-[1320px]"
             style={{
               fontFamily: fontDisplay,
-              fontSize: threadHeadlineFontSize(headline, isWide),
+              fontSize: scaledTemplateFontSize(threadHeadlineFontSize(headline, isWide), advancedLayout, 'headline', 38, 128),
             }}
           >
             {headline}
@@ -79,7 +80,7 @@ export const ThreadCoverView: React.FC<TemplateProps> = ({ project }) => {
             className={`font-semibold text-neutral-300 leading-snug ${isWide ? 'mt-3 max-w-[1000px]' : 'mt-4 max-w-[1200px]'}`}
             style={{
               fontFamily: fontBody,
-              fontSize: threadSubtitleFontSize(subtitle, isWide),
+              fontSize: scaledTemplateFontSize(threadSubtitleFontSize(subtitle, isWide), advancedLayout, 'subtitle', 18, 44),
             }}
           >
             {subtitle}
@@ -105,7 +106,7 @@ export const ThreadCoverView: React.FC<TemplateProps> = ({ project }) => {
                 </div>
                 <span
                   className="font-bold text-white tracking-wide leading-snug flex-1"
-                  style={{ fontSize: threadTopicFontSize(bullet, isWide) }}
+                  style={{ fontSize: scaledTemplateFontSize(threadTopicFontSize(bullet, isWide), advancedLayout, 'body', 14, 30) }}
                 >
                   {bullet}
                 </span>
