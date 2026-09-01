@@ -28,8 +28,8 @@ export function quotePunchlineFontSize(text: string, isWide = false): string {
     text,
     preferredPx: isWide ? 18 : 22,
     minPx: isWide ? 14 : 17,
-    maxLines: 3,
-    charsPerLineAtPreferred: isWide ? 52 : 46,
+    maxLines: 2,
+    charsPerLineAtPreferred: 35,
     lineHeight: 1.12,
   });
 }
