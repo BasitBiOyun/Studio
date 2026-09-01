@@ -2,6 +2,9 @@ import { CanvasDimensions, ExportFormat } from '../types';
 
 const TURKISH_GLYPH_SAMPLE = 'ÇĞİÖŞÜçğıöşü';
 const FONT_STYLESHEET_DOMAINS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+const FONT_READY_TIMEOUT_MS = 5000;
+const FONT_LOAD_TIMEOUT_MS = 3000;
+const IMAGE_READY_TIMEOUT_MS = 5000;
 
 export function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
@@ -27,6 +30,17 @@ export interface ExportOptions {
   onProgress?: ExportProgressCallback;
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function settleWithin<T>(promise: Promise<T>, timeoutMs: number): Promise<void> {
+  await Promise.race([
+    promise.then(() => undefined).catch(() => undefined),
+    delay(timeoutMs),
+  ]);
+}
+
 function waitFrame(): Promise<void> {
   return new Promise((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -35,43 +49,38 @@ function waitFrame(): Promise<void> {
 
 async function waitForFonts(node?: HTMLElement): Promise<void> {
   if (!document.fonts) return;
-  try {
-    await document.fonts.ready;
-    if (!node) return;
+  await settleWithin(document.fonts.ready, FONT_READY_TIMEOUT_MS);
+  if (!node) return;
 
-    const descriptors = new Set<string>();
-    const elements: HTMLElement[] = [node, ...Array.from(node.querySelectorAll<HTMLElement>('*'))];
-    for (const element of elements) {
-      const style = window.getComputedStyle(element);
-      if (!style.fontFamily) continue;
-      descriptors.add(`${style.fontStyle || 'normal'} ${style.fontWeight || '400'} 32px ${style.fontFamily}`);
-    }
+  const descriptors = new Set<string>();
+  const elements: HTMLElement[] = [node, ...Array.from(node.querySelectorAll<HTMLElement>('*'))];
+  for (const element of elements) {
+    const style = window.getComputedStyle(element);
+    if (!style.fontFamily) continue;
+    descriptors.add(`${style.fontStyle || 'normal'} ${style.fontWeight || '400'} 32px ${style.fontFamily}`);
+  }
 
-    await Promise.all(
-      Array.from(descriptors).map(async (descriptor) => {
-        try {
-          await document.fonts.load(descriptor, TURKISH_GLYPH_SAMPLE);
-        } catch {}
-      }),
-    );
-  } catch {}
+  await Promise.all(
+    Array.from(descriptors).map((descriptor) =>
+      settleWithin(document.fonts.load(descriptor, TURKISH_GLYPH_SAMPLE), FONT_LOAD_TIMEOUT_MS)
+    ),
+  );
 }
 
 async function waitForImage(img: HTMLImageElement): Promise<void> {
-  try {
-    if (!img.complete) {
-      await new Promise<void>((resolve) => {
+  if (!img.complete) {
+    await Promise.race([
+      new Promise<void>((resolve) => {
         const done = () => resolve();
         img.addEventListener('load', done, { once: true });
         img.addEventListener('error', done, { once: true });
-      });
-    }
-    if (typeof img.decode === 'function') {
-      try {
-        await img.decode();
-      } catch {}
-    }
-  } catch {}
+      }),
+      delay(IMAGE_READY_TIMEOUT_MS),
+    ]);
+  }
+  if (typeof img.decode === 'function') {
+    await settleWithin(img.decode(), IMAGE_READY_TIMEOUT_MS);
+  }
 }
 
 async function waitForAllImages(node: HTMLElement): Promise<void> {
@@ -128,10 +137,10 @@ function snapOptions(
     quality,
     scale: scaleMultiplier,
     dpr: 1,
-    reconcile: true,
+    reconcile: false,
     embedFonts: true,
     fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
-    cache: 'full' as const,
+    cache: 'soft' as const,
     compress: true,
     outerTransforms: true,
     outerShadows: false,
@@ -162,7 +171,6 @@ export async function exportGraphic(
 
   try {
     onProgress?.(`Preparing ${targetWidth} × ${targetHeight} px export...`);
-    
     await waitForFonts(node);
     await waitForAllImages(node);
     await waitFrame();

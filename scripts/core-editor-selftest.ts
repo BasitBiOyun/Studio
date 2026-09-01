@@ -16,6 +16,7 @@ const projectLibrary = read('src/components/ProjectLibraryModal.tsx');
 const storage = read('src/services/storage.ts');
 const exporter = read('src/services/exporter.ts');
 const sidebar = read('src/components/EditorSidebarV3.tsx');
+const indexHtml = read('index.html');
 
 assert.ok(
   !app.includes('currentProject.imageTransform'),
@@ -72,9 +73,9 @@ assert.ok(
 );
 
 for (const fidelityFlag of [
-  'reconcile: true',
+  'reconcile: false',
   'embedFonts: true',
-  "cache: 'full'",
+  "cache: 'soft'",
   'outerTransforms: true',
   'fast: true',
   'dpr: 1',
@@ -82,6 +83,14 @@ for (const fidelityFlag of [
 ]) {
   assert.ok(exporter.includes(fidelityFlag), `SnapDOM export fidelity flag missing: ${fidelityFlag}`);
 }
+assert.ok(
+  exporter.includes('FONT_READY_TIMEOUT_MS') && exporter.includes('IMAGE_READY_TIMEOUT_MS'),
+  'Export readiness waits must be bounded so a broken font or image cannot freeze export forever.',
+);
+assert.ok(
+  indexHtml.includes('crossorigin="anonymous"') && indexHtml.includes('fonts.googleapis.com/css2'),
+  'Google Fonts stylesheet must opt into CORS so SnapDOM can embed export fonts safely.',
+);
 
 assert.ok(
   !sidebar.includes('<IconWand'),
