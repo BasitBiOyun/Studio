@@ -89,14 +89,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
     <div className="relative h-full w-full">
       <EditorSidebarV3 {...props} />
 
-      <div className="absolute left-3 bottom-3 z-[80] w-[172px] pointer-events-none">
-        <details className="group pointer-events-auto rounded-xl border border-neutral-700/90 bg-neutral-950/95 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[310px]">
+      <div className="absolute left-3 bottom-3 z-[80] w-[132px] sm:w-[172px] pointer-events-none">
+        <details className="group pointer-events-auto rounded-xl border border-neutral-700/90 bg-neutral-950/95 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[calc(100vw-24px)] sm:open:w-[310px] max-w-[310px]">
           <summary className="cursor-pointer select-none px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center justify-between gap-2">
             <span>{isTr ? 'Yazı Boyutları' : 'Typography Sizes'}</span>
-            <span className="text-[9px] font-bold tracking-normal normal-case text-neutral-500">75–125%</span>
+            <span className="hidden sm:inline text-[9px] font-bold tracking-normal normal-case text-neutral-500">75–125%</span>
           </summary>
 
-          <div className="w-[310px] border-t border-neutral-800 p-3 space-y-2.5 max-h-[52vh] overflow-y-auto">
+          <div className="w-[calc(100vw-24px)] sm:w-[310px] max-w-[310px] border-t border-neutral-800 p-3 space-y-2.5 max-h-[52vh] overflow-y-auto">
             <div className="text-[10px] leading-relaxed text-neutral-500">
               {isTr
                 ? 'Her metin rolünü ayrı ölçekler. Şablonun kendi otomatik sığdırma mantığını korur.'
