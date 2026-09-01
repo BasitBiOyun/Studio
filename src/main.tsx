@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import './phase11Sidebar.css';
+import { BatchContentGeneratorLauncher } from './components/BatchContentGeneratorLauncher';
 
 const App = React.lazy(() => import('./App.tsx'));
 
@@ -92,6 +92,7 @@ createRoot(rootElement).render(
       }
     >
       <App />
+      <BatchContentGeneratorLauncher />
     </Suspense>
   </AppErrorBoundary>,
 );

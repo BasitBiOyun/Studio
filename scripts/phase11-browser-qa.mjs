@@ -33,8 +33,10 @@ try {
   const sidebarBox = await sidebar.boundingBox();
   const toolsBox = await tools.boundingBox();
   assert.ok(sidebarBox && toolsBox, 'Could not measure sidebar/tool panel layout.');
-  console.log('Phase 11 sidebar geometry:', JSON.stringify({ sidebarBox, toolsBox, positioning }));
-  assert.ok(sidebarBox.bottom <= toolsBox.top + 2, 'Studio Tools overlaps the main sidebar instead of sitting below it.');
+  const sidebarBottom = sidebarBox.y + sidebarBox.height;
+  const toolsTop = toolsBox.y;
+  console.log('Phase 11 sidebar geometry:', JSON.stringify({ sidebarBox, toolsBox, sidebarBottom, toolsTop, positioning }));
+  assert.ok(sidebarBottom <= toolsTop + 2, 'Studio Tools overlaps the main sidebar instead of sitting below it.');
 
   for (const testId of ['entity-database-open', 'asset-library-open', 'template-variants-toggle', 'auto-layout-presets-toggle', 'template-data-export']) {
     await page.getByTestId(testId).waitFor({ state: 'visible' });
