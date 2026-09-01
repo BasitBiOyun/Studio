@@ -4,6 +4,7 @@ import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { useOutputLanguage } from '../hooks/useOutputLanguage';
 import { EditorSidebarV3 } from './EditorSidebarV3';
 import { AssetLibraryModal } from './AssetLibraryModal';
+import { EntityDatabaseModal } from './EntityDatabaseModal';
 import {
   BRAND_PRESETS,
   BrandPresetId,
@@ -49,6 +50,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const outputLanguage = useOutputLanguage();
   const isTr = outputLanguage === 'tr';
   const [assetLibraryOpen, setAssetLibraryOpen] = useState(false);
+  const [entityDatabaseOpen, setEntityDatabaseOpen] = useState(false);
   const activeTemplate = project.templates[project.templateType] || project.templates['scouting-report'];
   const currentTypography = (activeTemplate.layout as any)?.typography || DEFAULT_TEMPLATE_TYPOGRAPHY;
 
@@ -101,6 +103,15 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       <EditorSidebarV3 {...props} />
 
       <div className="absolute left-3 bottom-3 z-[80] w-[142px] sm:w-[182px] pointer-events-none flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => setEntityDatabaseOpen(true)}
+          className="pointer-events-auto w-full rounded-xl border border-sky-800/80 bg-sky-950/80 px-3 py-2.5 text-left text-[11px] font-black uppercase tracking-wider text-sky-300 shadow-2xl backdrop-blur-xl hover:border-sky-600 hover:text-sky-200"
+          data-testid="entity-database-open"
+        >
+          {isTr ? 'Kulüp & Turnuva DB' : 'Club & Competition DB'}
+        </button>
+
         <button
           type="button"
           onClick={() => setAssetLibraryOpen(true)}
@@ -202,6 +213,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
         project={project}
         onChange={onChange}
         onClose={() => setAssetLibraryOpen(false)}
+        isTr={isTr}
+      />
+
+      <EntityDatabaseModal
+        open={entityDatabaseOpen}
+        project={project}
+        onChange={onChange}
+        onClose={() => setEntityDatabaseOpen(false)}
         isTr={isTr}
       />
     </div>
