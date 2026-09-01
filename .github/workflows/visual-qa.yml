@@ -8,6 +8,7 @@ on:
       - 'src/**'
       - 'scripts/visual-regression-qa.mjs'
       - 'scripts/phase4-browser-qa-v2.mjs'
+      - 'scripts/phase7-browser-qa.mjs'
       - '.github/workflows/visual-qa.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -57,6 +58,9 @@ jobs:
 
       - name: Run Phase 4 browser hardening
         run: node scripts/phase4-browser-qa-v2.mjs
+
+      - name: Run Phase 7 asset library browser QA
+        run: node scripts/phase7-browser-qa.mjs
 
       - name: Upload visual QA screenshots
         if: always()

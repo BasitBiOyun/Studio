@@ -1,6 +1,19 @@
 import Dexie, { Table } from 'dexie';
 import { Project } from '../types';
 
+export type AssetKind = 'player-cutout' | 'club-logo' | 'competition-logo' | 'custom-image';
+
+export interface AssetLibraryRecord {
+  id: string;
+  name: string;
+  kind: AssetKind;
+  dataUrl: string;
+  mimeType: string;
+  hash: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ProjectVersionRecord {
   id: string;
   projectId: string;
@@ -13,6 +26,7 @@ export class AppDatabase extends Dexie {
   projects!: Table<Project, string>;
   settings!: Table<{ id: string; data: any }, string>;
   projectVersions!: Table<ProjectVersionRecord, string>;
+  assets!: Table<AssetLibraryRecord, string>;
 
   constructor() {
     super('FootballStudioDB');
@@ -26,6 +40,13 @@ export class AppDatabase extends Dexie {
       projects: 'id, updatedAt',
       settings: 'id',
       projectVersions: 'id, projectId, createdAt, [projectId+createdAt]',
+    });
+
+    this.version(3).stores({
+      projects: 'id, updatedAt',
+      settings: 'id',
+      projectVersions: 'id, projectId, createdAt, [projectId+createdAt]',
+      assets: 'id, kind, name, hash, updatedAt, [kind+hash]',
     });
   }
 }

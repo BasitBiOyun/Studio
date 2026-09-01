@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Project } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { useOutputLanguage } from '../hooks/useOutputLanguage';
 import { EditorSidebarV3 } from './EditorSidebarV3';
+import { AssetLibraryModal } from './AssetLibraryModal';
 import {
   BRAND_PRESETS,
   BrandPresetId,
@@ -47,6 +48,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const { project, onChange } = props;
   const outputLanguage = useOutputLanguage();
   const isTr = outputLanguage === 'tr';
+  const [assetLibraryOpen, setAssetLibraryOpen] = useState(false);
   const activeTemplate = project.templates[project.templateType] || project.templates['scouting-report'];
   const currentTypography = (activeTemplate.layout as any)?.typography || DEFAULT_TEMPLATE_TYPOGRAPHY;
 
@@ -99,6 +101,15 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       <EditorSidebarV3 {...props} />
 
       <div className="absolute left-3 bottom-3 z-[80] w-[142px] sm:w-[182px] pointer-events-none flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => setAssetLibraryOpen(true)}
+          className="pointer-events-auto w-full rounded-xl border border-emerald-800/80 bg-emerald-950/80 px-3 py-2.5 text-left text-[11px] font-black uppercase tracking-wider text-emerald-300 shadow-2xl backdrop-blur-xl hover:border-emerald-600 hover:text-emerald-200"
+          data-testid="asset-library-open"
+        >
+          {isTr ? 'Varlık Kütüphanesi' : 'Asset Library'}
+        </button>
+
         <details className="group pointer-events-auto rounded-xl border border-neutral-700/90 bg-neutral-950/95 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[calc(100vw-24px)] sm:open:w-[330px] max-w-[330px]">
           <summary className="cursor-pointer select-none px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center justify-between gap-2">
             <span>{isTr ? 'Marka Presetleri' : 'Brand Presets'}</span>
@@ -185,6 +196,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
           </div>
         </details>
       </div>
+
+      <AssetLibraryModal
+        open={assetLibraryOpen}
+        project={project}
+        onChange={onChange}
+        onClose={() => setAssetLibraryOpen(false)}
+        isTr={isTr}
+      />
     </div>
   );
 };
