@@ -1,10 +1,10 @@
 {
   "roadmapVersion": 1,
   "branch": "main",
-  "currentPhase": 4,
+  "currentPhase": 5,
   "phases": {
     "3": "completed",
-    "4": "pending",
+    "4": "completed",
     "5": "pending",
     "6": "pending",
     "7": "pending",
