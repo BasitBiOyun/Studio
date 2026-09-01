@@ -7,7 +7,7 @@ on:
     paths:
       - 'src/**'
       - 'scripts/visual-regression-qa.mjs'
-      - 'scripts/phase4-browser-qa.mjs'
+      - 'scripts/phase4-browser-qa-v2.mjs'
       - '.github/workflows/visual-qa.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -56,7 +56,7 @@ jobs:
         run: node scripts/visual-regression-qa.mjs
 
       - name: Run Phase 4 browser hardening
-        run: node scripts/phase4-browser-qa.mjs
+        run: node scripts/phase4-browser-qa-v2.mjs
 
       - name: Upload visual QA screenshots
         if: always()
