@@ -17,6 +17,13 @@ import {
   TemplateVariantId,
 } from '../services/templateVariants';
 import {
+  applyAutoLayoutPreset,
+  AutoLayoutPresetId,
+  getActiveAutoLayoutPresetId,
+  getAutoLayoutPresets,
+  resetAutoLayout,
+} from '../services/autoLayoutPresets';
+import {
   DEFAULT_TEMPLATE_TYPOGRAPHY,
   TemplateTypographyRole,
 } from '../services/templateTypography';
@@ -61,6 +68,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const currentTypography = (activeTemplate.layout as any)?.typography || DEFAULT_TEMPLATE_TYPOGRAPHY;
   const templateVariants = getTemplateVariants(project.templateType);
   const activeVariantId = getActiveTemplateVariantId(project);
+  const autoLayoutPresets = getAutoLayoutPresets(project.templateType);
+  const activeAutoLayoutPresetId = getActiveAutoLayoutPresetId(project);
 
   const applyPreset = (presetId: BrandPresetId) => {
     onChange(applyBrandPreset(project, presetId));
@@ -68,6 +77,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
 
   const applyVariant = (variantId: TemplateVariantId) => {
     onChange(applyTemplateVariant(project, variantId));
+  };
+
+  const applyAutoLayout = (presetId: AutoLayoutPresetId) => {
+    onChange(applyAutoLayoutPreset(project, presetId));
+  };
+
+  const resetAutoLayoutPreset = () => {
+    onChange(resetAutoLayout(project));
   };
 
   const updateTypography = (role: TemplateTypographyRole, value: number) => {
@@ -173,6 +190,59 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                   </button>
                 );
               })}
+            </div>
+          </details>
+        )}
+
+        {autoLayoutPresets.length > 0 && (
+          <details
+            className="group pointer-events-auto rounded-xl border border-teal-800/80 bg-teal-950/90 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[calc(100vw-24px)] sm:open:w-[340px] max-w-[340px]"
+            data-testid="auto-layout-presets"
+          >
+            <summary
+              className="cursor-pointer select-none px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-teal-300 flex items-center justify-between gap-2"
+              data-testid="auto-layout-presets-toggle"
+            >
+              <span>{isTr ? 'Otomatik Yerleşim' : 'Auto Layout'}</span>
+              <span className="hidden sm:inline text-[9px] font-bold tracking-normal normal-case text-teal-400/70">{autoLayoutPresets.length}</span>
+            </summary>
+
+            <div className="w-[calc(100vw-24px)] sm:w-[340px] max-w-[340px] border-t border-teal-900/70 p-3 space-y-2 max-h-[42vh] overflow-y-auto">
+              <div className="text-[10px] leading-relaxed text-neutral-400">
+                {isTr
+                  ? 'Yalnızca bu şablon için güvenli yerleşimleri gösterir. İçerik ve semantic logo kimlikleri değişmez. Kilit açıksa sonrasında elle konumlandırma yapılabilir.'
+                  : 'Shows only layouts safe for this template. Content and semantic logo identities stay unchanged. Manual positioning remains available when unlocked.'}
+              </div>
+
+              {autoLayoutPresets.map((preset) => {
+                const active = activeAutoLayoutPresetId === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => applyAutoLayout(preset.id)}
+                    aria-pressed={active}
+                    data-testid={`auto-layout-preset-${preset.id}`}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                      active
+                        ? 'border-teal-400/80 bg-teal-500/15 text-white'
+                        : 'border-neutral-800 bg-neutral-900/80 text-neutral-300 hover:border-teal-800 hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="text-[11px] font-black">{isTr ? preset.labelTr : preset.label}</div>
+                    <div className="mt-1 text-[9px] leading-snug text-neutral-500">{isTr ? preset.descriptionTr : preset.description}</div>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={resetAutoLayoutPreset}
+                data-testid="auto-layout-reset"
+                className="w-full rounded-lg border border-teal-900/80 bg-neutral-950 px-3 py-2 text-[10px] font-bold text-neutral-300 hover:border-teal-600 hover:text-teal-300"
+              >
+                {isTr ? 'Yerleşimi Varsayılana Döndür' : 'Reset to Safe Default'}
+              </button>
             </div>
           </details>
         )}

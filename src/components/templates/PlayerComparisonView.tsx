@@ -7,6 +7,7 @@ import { formatComparisonContext, getMetricWinner, visibleComparisonMetrics } fr
 import { usablePlayerImageSrc } from '../../services/templateVisualPolicy';
 import { scaledTemplateFontSize } from '../../services/templateTypography';
 import { getActiveTemplateVariantId } from '../../services/templateVariants';
+import { getActiveAutoLayoutPresetId } from '../../services/autoLayoutPresets';
 
 interface TemplateProps { project: Project; }
 
@@ -40,12 +41,14 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const variant = getActiveTemplateVariantId(project) || 'comparison-split';
   const isTable = variant === 'comparison-table';
+  const autoLayout = getActiveAutoLayoutPresetId(project);
+  const hideSubjects = autoLayout === 'no-subject-full-content';
   const importedContext = (templateContent as any).dataProvenance?.context;
   const subtitle = formatComparisonContext(importedContext) || data.subtitle;
   const metrics = visibleComparisonMetrics(data.metrics);
   const player2Accent = theme.secondaryAccent || '#94a3b8';
-  const player1Image = usablePlayerImageSrc(visuals.playerImageSrc);
-  const player2Image = usablePlayerImageSrc(visuals.secondaryPlayerImageSrc);
+  const player1Image = hideSubjects ? '' : usablePlayerImageSrc(visuals.playerImageSrc);
+  const player2Image = hideSubjects ? '' : usablePlayerImageSrc(visuals.secondaryPlayerImageSrc);
 
   const renderCompactPlayer = (player: PlayerInfo, src: string, accent: string, side: 'left' | 'right') => (
     <div className={`rounded-2xl ${isWide ? 'p-3' : 'p-4'} border backdrop-blur-md shadow-xl flex items-center gap-3 ${side === 'right' ? 'flex-row-reverse text-right' : ''}`} style={{ backgroundColor: 'rgba(5, 9, 18, 0.9)', borderColor: `${accent}45` }}>
@@ -59,7 +62,7 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   );
 
   return (
-    <div data-template-variant={variant} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : isTable ? 'p-11 md:p-12' : 'p-14 md:p-16'} select-none`}>
+    <div data-template-variant={variant} data-layout-content={hideSubjects ? 'full' : 'split'} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : isTable ? 'p-11 md:p-12' : 'p-14 md:p-16'} select-none`}>
       <EditorialHeader categoryBadge={isTable ? 'Head-to-Head • Data Table' : 'Head-to-Head • Analytical Comparison'} title={`${data.player1.name} VS ${data.player2.name}`} subtitle={subtitle} theme={theme} fontDisplay={fontDisplay} layout={advancedLayout} visualMode={isTable ? 'data' : 'editorial'} />
 
       <div className={`flex-1 ${isWide ? 'my-3 gap-3' : isTable ? 'my-4 gap-4' : 'my-6 gap-6'} flex flex-col justify-center max-w-[2000px] mx-auto w-full`}>

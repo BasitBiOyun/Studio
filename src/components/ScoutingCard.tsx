@@ -18,6 +18,10 @@ import {
   getActiveTemplateVariantId,
   getTemplateVariantVisualMode,
 } from '../services/templateVariants';
+import {
+  getActiveAutoLayoutPresetId,
+  isSubjectHiddenByAutoLayout,
+} from '../services/autoLayoutPresets';
 
 import { ScoutingReportView } from './templates/ScoutingReportView';
 import { PlayerComparisonView } from './templates/PlayerComparisonView';
@@ -60,9 +64,16 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
       ...logo,
       src: usableLogoSrc(logo.src),
     }));
-    const backgroundLogo = visualPolicy.backgroundLogoIndex === undefined
+    const autoLayoutPreset = getActiveAutoLayoutPresetId(project);
+    const baseBackgroundLogo = visualPolicy.backgroundLogoIndex === undefined
       ? null
       : effectiveLogos[visualPolicy.backgroundLogoIndex] || null;
+    const backgroundLogo = autoLayoutPreset === 'crest-background'
+      ? (effectiveLogos[0] || baseBackgroundLogo)
+      : autoLayoutPreset === 'no-subject-full-content' && templateType === 'team-profile'
+        ? null
+        : baseBackgroundLogo;
+    const hideGlobalSubject = isSubjectHiddenByAutoLayout(project);
     const semanticLogoTemplates = new Set([
       'player-comparison',
       'transfer-graphic',
@@ -134,6 +145,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
         id={interactive ? 'scouting-graphic-root' : undefined}
         data-graphic-root="true"
         data-template-variant={templateVariant || undefined}
+        data-auto-layout-preset={autoLayoutPreset}
         lang={outputLanguage === 'tr' ? 'tr-TR' : 'en'}
         className="relative select-none overflow-hidden"
         style={{
@@ -162,7 +174,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
 
         <BackgroundCrestLayer logo={backgroundLogo} />
 
-        {visualPolicy.renderPrimaryAsGlobalLayer && effectivePrimaryImage && (
+        {visualPolicy.renderPrimaryAsGlobalLayer && effectivePrimaryImage && !hideGlobalSubject && (
           <PlayerPhotoLayer
             imageSrc={effectivePrimaryImage}
             transform={imageTransform}
@@ -172,7 +184,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           />
         )}
 
-        {visualPolicy.renderSecondaryAsGlobalLayer && effectiveSecondaryImage && secondaryImageTransform && (
+        {visualPolicy.renderSecondaryAsGlobalLayer && effectiveSecondaryImage && secondaryImageTransform && !hideGlobalSubject && (
           <PlayerPhotoLayer
             imageSrc={effectiveSecondaryImage}
             transform={secondaryImageTransform}

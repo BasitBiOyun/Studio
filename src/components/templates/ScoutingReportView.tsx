@@ -7,6 +7,7 @@ import { IconBolt, IconAward, IconCrosshair, IconCompass } from '@tabler/icons-r
 import { resolveCountryFlag } from '../../services/footballLocale';
 import { scaledTemplateFontSize } from '../../services/templateTypography';
 import { getActiveTemplateVariantId } from '../../services/templateVariants';
+import { getActiveAutoLayoutPresetId } from '../../services/autoLayoutPresets';
 
 interface TemplateProps { project: Project; }
 
@@ -30,6 +31,9 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
   const { profile, stats, strengths, development } = templateContent;
   const variant = getActiveTemplateVariantId(project) || 'scouting-editorial';
   const isDataVariant = variant === 'scouting-data';
+  const autoLayout = getActiveAutoLayoutPresetId(project);
+  const fullContent = autoLayout === 'no-subject-full-content';
+  const playerLeft = autoLayout === 'player-left';
   const visualMode = isDataVariant ? 'data' : (project.visualMode || 'editorial');
   const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
@@ -56,13 +60,18 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
   const statCardClass = visibleStats.length === 1 ? (isWide ? 'min-h-[112px]' : 'min-h-[140px]') : '';
   const visibleStrengths = strengths.slice(0, 5);
   const visibleDevelopment = development.slice(0, 3);
+  const contentColumnClass = fullContent
+    ? 'col-span-12'
+    : playerLeft
+      ? (isDataVariant ? 'col-span-9 col-start-4' : 'col-span-8 col-start-5')
+      : (isDataVariant ? 'col-span-9' : 'col-span-8');
 
   return (
-    <div data-template-variant={variant} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-5' : isDataVariant ? 'p-8 md:p-9' : 'p-9 md:p-10'} select-none`}>
+    <div data-template-variant={variant} data-layout-content={fullContent ? 'full' : playerLeft ? 'right' : 'left'} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-5' : isDataVariant ? 'p-8 md:p-9' : 'p-9 md:p-10'} select-none`}>
       <EditorialHeader title={player?.name || ''} subtitle={subtitle} metaBadges={metaBadges} theme={theme} fontDisplay={fontDisplay} visualMode={visualMode} layout={advancedLayout} />
 
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-3 my-1.5' : 'gap-5 my-3'} items-center min-h-0`}>
-        <div className={`${isDataVariant ? 'col-span-9' : 'col-span-8'} flex flex-col ${isWide ? 'gap-2.5' : 'gap-3'} min-h-0`}>
+        <div className={`${contentColumnClass} flex flex-col ${isWide ? 'gap-2.5' : 'gap-3'} min-h-0`}>
           {scoutingHeadline && (
             <div className="font-black uppercase tracking-tight leading-[1.02] pr-2" style={{ order: 0, fontFamily: fontDisplay, color: theme.primaryAccent, fontSize: scaledTemplateFontSize(isWide ? 18 : 22, advancedLayout, 'subtitle', 14, 28) }}>
               {scoutingHeadline}
@@ -99,7 +108,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
             </div>
           )}
         </div>
-        <div className={`${isDataVariant ? 'col-span-3' : 'col-span-4'} h-full pointer-events-none`} />
+        {!fullContent && !playerLeft && <div className={`${isDataVariant ? 'col-span-3' : 'col-span-4'} h-full pointer-events-none`} />}
       </div>
 
       {advancedLayout.visibleBlocks.footer !== false && <EditorialFooter credits={credits} theme={theme} visualMode={visualMode} />}

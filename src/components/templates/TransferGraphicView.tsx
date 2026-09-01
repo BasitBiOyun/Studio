@@ -6,6 +6,7 @@ import { formatTransferPlayerMeta, transferHeadlineFontSize, transferPlayerLineF
 import { usableLogoSrc } from '../../services/templateVisualPolicy';
 import { scaledTemplateFontSize } from '../../services/templateTypography';
 import { getActiveTemplateVariantId } from '../../services/templateVariants';
+import { getActiveAutoLayoutPresetId } from '../../services/autoLayoutPresets';
 
 interface TemplateProps { project: Project; }
 
@@ -21,6 +22,9 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const variant = getActiveTemplateVariantId(project) || 'transfer-editorial';
   const isMinimal = variant === 'transfer-minimal';
   const isBreaking = variant === 'transfer-breaking';
+  const autoLayout = getActiveAutoLayoutPresetId(project);
+  const fullContent = autoLayout === 'no-subject-full-content';
+  const playerLeft = autoLayout === 'player-left';
   const playerMeta = formatTransferPlayerMeta(data.player);
   const conditions = visibleTransferConditions(data.keyConditions);
   const hasFee = Boolean(data.transferFee?.trim());
@@ -32,6 +36,18 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const toClubLogo = visuals.logos?.[1];
   const fromClubLogoSrc = fromClubLogo?.visible ? usableLogoSrc(fromClubLogo.src) : '';
   const toClubLogoSrc = toClubLogo?.visible ? usableLogoSrc(toClubLogo.src) : '';
+  const defaultContentColumnClass = isMinimal ? 'col-span-7' : isBreaking ? 'col-span-9' : 'col-span-8';
+  const playerLeftContentColumnClass = isMinimal ? 'col-span-7 col-start-6' : isBreaking ? 'col-span-9 col-start-4' : 'col-span-8 col-start-5';
+  const contentColumnClass = fullContent ? 'col-span-12' : playerLeft ? playerLeftContentColumnClass : defaultContentColumnClass;
+  const headerWidthClass = fullContent
+    ? 'max-w-full'
+    : playerLeft
+      ? 'ml-auto max-w-[70%] text-right'
+      : isBreaking
+        ? 'max-w-[78%]'
+        : isMinimal
+          ? 'max-w-[68%]'
+          : '';
 
   const renderClubIdentity = (side: 'from-club' | 'to-club', label: string, clubName: string, logoSrc: string, logoName?: string, logoOpacity = 100) => {
     const isDestination = side === 'to-club';
@@ -46,9 +62,9 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   return (
-    <div data-template-variant={variant} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? (isMinimal ? 'p-7' : 'p-8') : (isMinimal ? 'p-11 md:p-12' : 'p-14 md:p-16')} select-none`}>
-      <div className={isBreaking ? 'max-w-[78%]' : isMinimal ? 'max-w-[68%]' : ''}>
-        <div className={`flex items-center gap-3 ${isMinimal ? 'mb-1' : 'mb-2'}`}>
+    <div data-template-variant={variant} data-layout-content={fullContent ? 'full' : playerLeft ? 'right' : 'left'} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? (isMinimal ? 'p-7' : 'p-8') : (isMinimal ? 'p-11 md:p-12' : 'p-14 md:p-16')} select-none`}>
+      <div className={headerWidthClass}>
+        <div className={`flex items-center gap-3 ${playerLeft ? 'justify-end' : ''} ${isMinimal ? 'mb-1' : 'mb-2'}`}>
           {data.badgeText && <span className={`${isBreaking ? 'px-5 py-2 text-sm' : isMinimal ? 'px-3 py-1 text-[10px]' : 'px-4 py-1.5 text-xs'} rounded-full font-black tracking-widest uppercase border`} style={{ backgroundColor: isBreaking ? theme.primaryAccent : `${theme.primaryAccent}20`, borderColor: `${theme.primaryAccent}60`, color: isBreaking ? '#05070b' : theme.primaryAccent }}>{data.badgeText}</span>}
           {!isBreaking && <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">{playerMeta}</span>}
         </div>
@@ -58,7 +74,7 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
       </div>
 
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-5 my-4' : 'gap-8 my-6'} items-center`}>
-        <div className={`${isMinimal ? 'col-span-7' : isBreaking ? 'col-span-9' : 'col-span-8'} flex flex-col ${isWide ? 'gap-4' : 'gap-6'} max-w-[1450px]`}>
+        <div className={`${contentColumnClass} flex flex-col ${isWide ? 'gap-4' : 'gap-6'} max-w-[1450px]`}>
           {hasClubFlow && (
             <div className={`${isBreaking ? 'rounded-[28px]' : isMinimal ? 'rounded-xl' : 'rounded-2xl'} ${isWide ? (isMinimal ? 'p-3' : 'p-4') : (isMinimal ? 'p-4' : 'p-6')} border backdrop-blur-md flex items-center justify-between shadow-2xl`} style={{ backgroundColor: isBreaking ? `${theme.primaryAccent}14` : isMinimal ? 'rgba(5, 8, 16, 0.68)' : 'rgba(10, 14, 26, 0.9)', borderColor: isBreaking ? `${theme.primaryAccent}75` : `${theme.primaryAccent}40` }}>
               {renderClubIdentity('from-club', 'Departing Club', data.fromClub, fromClubLogoSrc, fromClubLogo?.name, fromClubLogo?.opacity)}
@@ -81,7 +97,7 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
             </div>
           )}
         </div>
-        <div className={`${isMinimal ? 'col-span-5' : isBreaking ? 'col-span-3' : 'col-span-4'} h-full pointer-events-none`} />
+        {!fullContent && !playerLeft && <div className={`${isMinimal ? 'col-span-5' : isBreaking ? 'col-span-3' : 'col-span-4'} h-full pointer-events-none`} />}
       </div>
       <EditorialFooter credits={credits} theme={theme} visualMode={isBreaking ? 'poster' : 'editorial'} />
     </div>
