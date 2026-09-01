@@ -1,3 +1,5 @@
+import { fitTextFontSize } from './smartTextFit';
+
 export const MAX_THREAD_TOPICS = 3;
 
 export function visibleThreadTopics(topics: string[] = []): string[] {
@@ -8,43 +10,36 @@ export function visibleThreadTopics(topics: string[] = []): string[] {
 }
 
 export function threadHeadlineFontSize(text: string, isWide = false): string {
-  const length = String(text || '').trim().length;
-
-  if (isWide) {
-    if (length <= 28) return '82px';
-    if (length <= 48) return '70px';
-    if (length <= 72) return '60px';
-    return '52px';
-  }
-
-  if (length <= 28) return '120px';
-  if (length <= 48) return '104px';
-  if (length <= 72) return '88px';
-  return '76px';
+  return fitTextFontSize({
+    text,
+    preferredPx: isWide ? 82 : 120,
+    minPx: isWide ? 52 : 76,
+    maxLines: isWide ? 2 : 3,
+    charsPerLineAtPreferred: isWide ? 20 : 18,
+    lineHeight: 0.96,
+  });
 }
 
 export function threadSubtitleFontSize(text: string, isWide = false): string {
-  const length = String(text || '').trim().length;
-
-  if (isWide) {
-    if (length <= 80) return '27px';
-    if (length <= 150) return '23px';
-    return '20px';
-  }
-
-  if (length <= 80) return '34px';
-  if (length <= 150) return '29px';
-  return '25px';
+  return fitTextFontSize({
+    text,
+    preferredPx: isWide ? 27 : 34,
+    minPx: isWide ? 20 : 25,
+    maxLines: 3,
+    charsPerLineAtPreferred: isWide ? 46 : 42,
+    lineHeight: 1.08,
+  });
 }
 
 export function threadTopicFontSize(text: string, isWide = false): string {
-  const length = String(text || '').trim().length;
-  if (isWide) {
-    if (length <= 54) return '17px';
-    return '15px';
-  }
-  if (length <= 54) return '19px';
-  return '17px';
+  return fitTextFontSize({
+    text,
+    preferredPx: isWide ? 17 : 19,
+    minPx: isWide ? 15 : 17,
+    maxLines: 2,
+    charsPerLineAtPreferred: isWide ? 40 : 44,
+    lineHeight: 1.08,
+  });
 }
 
 export function threadHeaderContext(badge?: string, authorHandle?: string) {

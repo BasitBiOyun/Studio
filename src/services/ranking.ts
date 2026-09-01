@@ -1,4 +1,5 @@
 import { RankingTopItem } from '../types';
+import { fitTextFontSize } from './smartTextFit';
 
 export const MAX_RANKING_ITEMS = 5;
 
@@ -29,40 +30,34 @@ export function rankingMeta(club?: string, subVal?: string): string {
 }
 
 export function rankingTitleFontSize(title: string, isWide = false): string {
-  const length = String(title || '').trim().length;
-  if (isWide) {
-    if (length <= 18) return '72px';
-    if (length <= 30) return '62px';
-    return '52px';
-  }
-
-  if (length <= 18) return '96px';
-  if (length <= 30) return '82px';
-  return '70px';
+  return fitTextFontSize({
+    text: title,
+    preferredPx: isWide ? 72 : 96,
+    minPx: isWide ? 52 : 70,
+    maxLines: 2,
+    charsPerLineAtPreferred: isWide ? 16 : 14,
+    lineHeight: 0.98,
+  });
 }
 
 export function rankingNameFontSize(name: string, isWide = false): string {
-  const length = String(name || '').trim().length;
-  if (isWide) {
-    if (length <= 18) return '30px';
-    if (length <= 28) return '27px';
-    return '24px';
-  }
-
-  if (length <= 18) return '34px';
-  if (length <= 28) return '30px';
-  return '26px';
+  return fitTextFontSize({
+    text: name,
+    preferredPx: isWide ? 30 : 34,
+    minPx: isWide ? 24 : 26,
+    maxLines: 2,
+    charsPerLineAtPreferred: isWide ? 16 : 18,
+    lineHeight: 1.02,
+  });
 }
 
 export function rankingValueFontSize(value: string, isWide = false): string {
-  const length = String(value || '').trim().length;
-  if (isWide) {
-    if (length <= 7) return '42px';
-    if (length <= 11) return '36px';
-    return '31px';
-  }
-
-  if (length <= 7) return '46px';
-  if (length <= 11) return '40px';
-  return '34px';
+  return fitTextFontSize({
+    text: value,
+    preferredPx: isWide ? 42 : 46,
+    minPx: isWide ? 31 : 34,
+    maxLines: 1,
+    charsPerLineAtPreferred: 7,
+    lineHeight: 1,
+  });
 }
