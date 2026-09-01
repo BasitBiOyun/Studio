@@ -29,7 +29,7 @@ export const ThreadCoverView: React.FC<TemplateProps> = ({ project }) => {
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
   const fontBody = advancedLayout?.fontBody || "'Plus Jakarta Sans', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const headline = String(data.headline || '').trim();
   const subtitle = String(data.subtitle || '').trim();
   const header = threadHeaderContext(data.badge, data.authorHandle);

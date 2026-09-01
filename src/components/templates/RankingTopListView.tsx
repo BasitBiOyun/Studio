@@ -29,7 +29,7 @@ export const RankingTopListView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const items = visibleRankingItems(data.items || []);
   const hasSeason = Boolean(data.seasonFilter?.trim());
   const hasSubtitle = Boolean(data.subtitle?.trim());

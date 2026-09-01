@@ -29,7 +29,7 @@ export const QuoteOpinionView: React.FC<TemplateProps> = ({ project }) => {
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
   const fontBody = advancedLayout?.fontBody || "'Plus Jakarta Sans', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const quote = String(data.quote || '').trim();
   const authorName = String(data.authorName || '').trim();
   const authorRole = String(data.authorRole || '').trim();
