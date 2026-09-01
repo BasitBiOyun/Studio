@@ -1,4 +1,5 @@
 import { TacticalAnalysisData } from '../types';
+import { fitTextFontSize } from './smartTextFit';
 
 export const MAX_TACTICAL_PRINCIPLES = 3;
 export const MAX_TACTICAL_TRIGGERS = 3;
@@ -30,19 +31,13 @@ export function tacticalDeepDiveLabel(phase?: string): string {
 }
 
 export function tacticalTopicFontSize(topic: string, isWide = false): string {
-  const length = String(topic || '').trim().length;
-
-  if (isWide) {
-    if (length <= 20) return '76px';
-    if (length <= 32) return '66px';
-    if (length <= 46) return '56px';
-    if (length <= 60) return '48px';
-    return '42px';
-  }
-
-  if (length <= 20) return '96px';
-  if (length <= 32) return '84px';
-  if (length <= 46) return '72px';
-  if (length <= 60) return '62px';
-  return '54px';
+  return fitTextFontSize({
+    text: topic,
+    preferredPx: isWide ? 76 : 96,
+    minPx: isWide ? 42 : 54,
+    maxLines: 2,
+    charsPerLineAtPreferred: 10,
+    lineHeight: 0.94,
+    containerHeightPx: isWide ? 155 : 195,
+  });
 }
