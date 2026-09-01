@@ -24,7 +24,7 @@ const EXACT_TR: Record<string, string> = {
   'KEY STRENGTHS': 'GÜÇLÜ YÖNLER',
   'Development Areas': 'Gelişim Alanları',
   'DEVELOPMENT AREAS': 'GELİŞİM ALANLARI',
-  'Scout Verdict': 'Scout Değerlendirmesi',
+  'Scout Verdict': 'Genel Değerlendirme',
   'Scouting Report': 'Scout Raporu',
   'PLAYER SCOUTING REPORT': 'OYUNCU SCOUT RAPORU',
   'Head-to-Head • Analytical Comparison': 'Bire Bir • Analitik Karşılaştırma',
