@@ -153,7 +153,7 @@ async function testSemanticLogos(page) {
   await openTemplate(page, 'Transfer Graphic');
   await openTab(page, 'Visuals');
   await chooseClub(page, 'From Club Logo', 'Arsenal');
-  await chooseClub(page, 'To Club Logo', 'Fenerbahçe');
+  await chooseClub(page, 'To Club Logo', 'Fenerbahce');
 
   let artboard = await root(page);
   const from = artboard.locator('[data-semantic-logo-slot="from-club"] img').first();
@@ -244,7 +244,7 @@ async function main() {
     await testExports(page);
     await assertNoDuplicateIds(page, 'after exports');
     if (pageErrors.length) throw new Error(`page errors: ${pageErrors.join(' | ')}`);
-    console.log('Phase 4 browser QA passed: history, persistence, sidebar, localization, crop/remove, footer/socials, Arsenal/Fenerbahçe/Real Madrid semantic logos, manual logo upload, PNG/JPG 1x/2x/4x, four-ratio batch export and duplicate-id checks are green.');
+    console.log('Phase 4 browser QA passed: history, persistence, sidebar, localization, crop/remove, footer/socials, Arsenal/Fenerbahce/Real Madrid semantic logos, manual logo upload, PNG/JPG 1x/2x/4x, four-ratio batch export and duplicate-id checks are green.');
   } finally {
     await context.close();
     await browser.close();
