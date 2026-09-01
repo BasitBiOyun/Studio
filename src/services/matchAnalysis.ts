@@ -1,3 +1,5 @@
+import { fitTextFontSize } from './smartTextFit';
+
 export const MAX_MATCH_ANALYSIS_STATS = 4;
 export const MAX_MATCH_ANALYSIS_TAKEAWAYS = 3;
 export const MAX_MATCH_ANALYSIS_SCORERS_PER_TEAM = 4;
@@ -56,21 +58,15 @@ export function matchAnalysisMetricShare(stat: MatchAnalysisStatLike): number {
 }
 
 export function matchAnalysisScoreFontSize(team1: string, team2: string, isWide = false): string {
-  const length = `${team1 || ''} 0-0 ${team2 || ''}`.trim().length;
-
-  if (isWide) {
-    if (length <= 22) return '74px';
-    if (length <= 34) return '64px';
-    if (length <= 46) return '54px';
-    if (length <= 58) return '46px';
-    return '40px';
-  }
-
-  if (length <= 22) return '96px';
-  if (length <= 34) return '84px';
-  if (length <= 46) return '72px';
-  if (length <= 58) return '62px';
-  return '54px';
+  return fitTextFontSize({
+    text: `${team1 || ''} 0-0 ${team2 || ''}`.trim(),
+    preferredPx: isWide ? 74 : 96,
+    minPx: isWide ? 40 : 54,
+    maxLines: 2,
+    charsPerLineAtPreferred: 11,
+    lineHeight: 0.92,
+    containerHeightPx: isWide ? 150 : 190,
+  });
 }
 
 export function matchAnalysisHeaderLabel(competition?: string): string {
