@@ -5,6 +5,7 @@ import { BackgroundPattern } from './design/BackgroundPattern';
 import { BackgroundCrestLayer } from './design/BackgroundCrestLayer';
 import { PlayerPhotoLayer } from './design/PlayerPhotoLayer';
 import { LogosLayer } from './design/LogosLayer';
+import { SemanticLogosLayer } from './design/SemanticLogosLayer';
 import { useOutputLanguage } from '../hooks/useOutputLanguage';
 import { localizeCardElement } from '../services/outputLanguage';
 import { attachTransferClubAutocomplete } from '../services/transferClubAutocomplete';
@@ -58,7 +59,16 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
     const backgroundLogo = visualPolicy.backgroundLogoIndex === undefined
       ? null
       : effectiveLogos[visualPolicy.backgroundLogoIndex] || null;
-    const semanticLogoIndexes = ['transfer-graphic', 'match-preview', 'match-analysis', 'match-result'].includes(templateType)
+    const semanticLogoTemplates = new Set([
+      'player-comparison',
+      'transfer-graphic',
+      'match-preview',
+      'match-analysis',
+      'tactical-analysis',
+      'match-result',
+      'team-profile',
+    ]);
+    const semanticLogoIndexes = semanticLogoTemplates.has(templateType)
       ? new Set([0, 1])
       : new Set<number>();
     const foregroundLogos = effectiveLogos.filter((_, index) => (
@@ -164,6 +174,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           />
         )}
 
+        <SemanticLogosLayer project={project} logos={effectiveLogos} />
         <LogosLayer logos={foregroundLogos} />
 
         <div
