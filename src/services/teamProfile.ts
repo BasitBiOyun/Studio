@@ -1,4 +1,5 @@
 import { StatItem } from '../types';
+import { fitTextFontSize } from './smartTextFit';
 
 export const MAX_TEAM_PROFILE_METRICS = 4;
 export const MAX_TEAM_PROFILE_POINTS = 3;
@@ -25,31 +26,25 @@ export function visibleTeamProfilePoints(points: string[] = []): string[] {
 }
 
 export function teamProfileTitleFontSize(teamName: string, isWide = false): string {
-  const length = String(teamName || '').trim().length;
-
-  if (isWide) {
-    if (length <= 14) return '76px';
-    if (length <= 22) return '66px';
-    if (length <= 32) return '56px';
-    return '48px';
-  }
-
-  if (length <= 14) return '100px';
-  if (length <= 22) return '86px';
-  if (length <= 32) return '72px';
-  return '62px';
+  return fitTextFontSize({
+    text: teamName,
+    preferredPx: isWide ? 76 : 100,
+    minPx: isWide ? 48 : 62,
+    maxLines: 2,
+    charsPerLineAtPreferred: 7,
+    lineHeight: 0.92,
+    containerHeightPx: isWide ? 150 : 195,
+  });
 }
 
 export function teamProfileStyleFontSize(style: string, isWide = false): string {
-  const length = String(style || '').trim().length;
-
-  if (isWide) {
-    if (length <= 34) return '25px';
-    if (length <= 54) return '21px';
-    return '18px';
-  }
-
-  if (length <= 34) return '32px';
-  if (length <= 54) return '27px';
-  return '23px';
+  return fitTextFontSize({
+    text: style,
+    preferredPx: isWide ? 25 : 32,
+    minPx: isWide ? 18 : 23,
+    maxLines: 3,
+    charsPerLineAtPreferred: isWide ? 13 : 12,
+    lineHeight: 1.15,
+    containerHeightPx: isWide ? 95 : 125,
+  });
 }
