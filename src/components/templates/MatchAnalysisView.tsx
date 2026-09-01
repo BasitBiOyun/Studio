@@ -37,7 +37,7 @@ export const MatchAnalysisView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const stats = visibleMatchAnalysisStats(data.stats);
   const takeaways = visibleMatchAnalysisTakeaways(data.keyTakeaways);
   const scorersTeam1 = visibleMatchAnalysisScorers(data.scorersTeam1);
