@@ -45,8 +45,8 @@ export function rankingNameFontSize(name: string, isWide = false): string {
     text: name,
     preferredPx: isWide ? 30 : 34,
     minPx: isWide ? 24 : 26,
-    maxLines: 2,
-    charsPerLineAtPreferred: isWide ? 16 : 18,
+    maxLines: 1,
+    charsPerLineAtPreferred: isWide ? 18 : 20,
     lineHeight: 1.02,
   });
 }
