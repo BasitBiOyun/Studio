@@ -18,6 +18,7 @@ import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { exportProjectToJson } from '../services/storage';
 import { setOutputLanguage, useOutputLanguage } from '../hooks/useOutputLanguage';
 import { templatePackLabel } from '../services/templatePack';
+import brandLogoUrl from '../assets/basitbioyunLogoData';
 
 interface TopBarProps {
   project: Project;
@@ -78,14 +79,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   const handleTemplateJsonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     try {
       const jsonText = await file.text();
       window.dispatchEvent(new CustomEvent('bbo-template-json-import', {
-        detail: {
-          jsonText,
-          templateType: project.templateType,
-        },
+        detail: { jsonText, templateType: project.templateType },
       }));
     } catch (error) {
       console.error(error);
@@ -96,9 +93,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   const requestImageRemoval = (secondary = false) => {
-    window.dispatchEvent(new CustomEvent('bbo-remove-player-image', {
-      detail: { secondary },
-    }));
+    window.dispatchEvent(new CustomEvent('bbo-remove-player-image', { detail: { secondary } }));
   };
 
   const handleExportClick = async (scale: 1 | 2 | 4, format: ExportFormat | 'json') => {
@@ -117,7 +112,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="h-14 shrink-0 bg-neutral-950/95 border-b border-neutral-800 px-2 sm:px-3 lg:px-5 flex items-center justify-between gap-1.5 sm:gap-2 z-30 select-none min-w-0">
+    <header
+      data-testid="studio-topbar"
+      className="h-14 shrink-0 bg-neutral-950/95 border-b border-neutral-800 px-2 sm:px-3 lg:px-5 flex items-center justify-between gap-1.5 sm:gap-2 z-30 select-none min-w-0"
+    >
       <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink-0">
         <button
           onClick={onOpenMobileDrawer}
@@ -128,16 +126,14 @@ export const TopBar: React.FC<TopBarProps> = ({
           <IconMenu2 size={20} />
         </button>
 
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-black font-black text-xs shadow-md flex-shrink-0">
-            BBO
-          </div>
-          <div className="hidden md:block min-w-0">
-            <h1 className="text-xs font-black text-white tracking-wide uppercase">BasitBiOyun Studio</h1>
-            <p className="text-[10px] text-neutral-400 truncate max-w-[180px]">
-              {project.name || project.sharedData?.player?.name}
-            </p>
-          </div>
+        <div className="flex items-center min-w-0" aria-label="BasitBiOyun">
+          <img
+            data-testid="studio-brand-logo"
+            src={brandLogoUrl}
+            alt="BasitBiOyun"
+            draggable={false}
+            className="h-10 w-10 rounded-lg object-cover shadow-md select-none"
+          />
         </div>
 
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-bold text-neutral-300">
@@ -196,11 +192,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <button
               key={language}
               onClick={() => setOutputLanguage(language)}
-              className={`min-w-9 min-h-8 px-2 rounded-lg text-[11px] font-black transition-colors ${
-                outputLanguage === language
-                  ? 'bg-cyan-500 text-black'
-                  : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
-              }`}
+              className={`min-w-9 min-h-8 px-2 rounded-lg text-[11px] font-black transition-colors ${outputLanguage === language ? 'bg-cyan-500 text-black' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
               aria-pressed={outputLanguage === language}
             >
               {language.toUpperCase()}
@@ -322,9 +314,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       <button
                         key={fmt}
                         onClick={() => setExportFormat(fmt)}
-                        className={`py-1.5 rounded text-xs font-bold uppercase min-h-9 ${
-                          exportFormat === fmt ? 'bg-cyan-500 text-black' : 'bg-neutral-800 text-neutral-400 hover:text-white'
-                        }`}
+                        className={`py-1.5 rounded text-xs font-bold uppercase min-h-9 ${exportFormat === fmt ? 'bg-cyan-500 text-black' : 'bg-neutral-800 text-neutral-400 hover:text-white'}`}
                       >
                         {fmt}
                       </button>
@@ -340,15 +330,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                         <button
                           key={scale}
                           onClick={() => setScaleMultiplier(scale)}
-                          className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                            scaleMultiplier === scale ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-neutral-300 hover:bg-neutral-800'
-                          }`}
+                          className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${scaleMultiplier === scale ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-neutral-300 hover:bg-neutral-800'}`}
                         >
                           <div>
                             <div>{scale === 4 ? '4× Ultra High-Res' : scale === 2 ? '2× High-Res' : '1× Native Resolution'}</div>
-                            <div className="text-[10px] text-neutral-500">
-                              {currentDim.width * scale} × {currentDim.height * scale} px
-                            </div>
+                            <div className="text-[10px] text-neutral-500">{currentDim.width * scale} × {currentDim.height * scale} px</div>
                           </div>
                           {scaleMultiplier === scale && <IconCheck size={14} />}
                         </button>

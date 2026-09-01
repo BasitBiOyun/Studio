@@ -12,6 +12,7 @@ on:
       - 'scripts/phase8-browser-qa.mjs'
       - 'scripts/phase9-browser-qa.mjs'
       - 'scripts/phase10-browser-qa.mjs'
+      - 'scripts/phase11-browser-qa.mjs'
       - '.github/workflows/visual-qa.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -73,6 +74,9 @@ jobs:
 
       - name: Run Phase 10 auto-layout browser QA
         run: node scripts/phase10-browser-qa.mjs
+
+      - name: Run Phase 11 smart-data & sidebar browser QA
+        run: node scripts/phase11-browser-qa.mjs
 
       - name: Upload visual QA screenshots
         if: always()
