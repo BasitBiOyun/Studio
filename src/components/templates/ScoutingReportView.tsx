@@ -30,7 +30,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
   const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
   const { profile, stats, strengths, development } = templateContent;
   const visualMode = project.visualMode || 'editorial';
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
   const scoutingHeadline = (templateContent as any).scoutingHeadline || '';
   const resolvedFlag = resolveCountryFlag(player.nationality, player.countryFlag);
