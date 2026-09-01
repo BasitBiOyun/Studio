@@ -37,7 +37,7 @@ export function threadTopicFontSize(text: string, isWide = false): string {
     preferredPx: isWide ? 17 : 19,
     minPx: isWide ? 15 : 17,
     maxLines: 2,
-    charsPerLineAtPreferred: isWide ? 40 : 44,
+    charsPerLineAtPreferred: isWide ? 26 : 28,
     lineHeight: 1.08,
   });
 }
