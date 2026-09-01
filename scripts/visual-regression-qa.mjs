@@ -104,8 +104,12 @@ async function runPhase2Interactions(page) {
   const artboardRoot = page.locator('[data-editor-artboard] #scouting-graphic-root').first();
   await artboardRoot.waitFor({ state: 'attached', timeout: 5_000 });
 
-  const canvasLogo = artboardRoot.locator('.moveable-target img').first();
-  await canvasLogo.waitFor({ state: 'attached', timeout: 5_000 });
+  // Transfer Graphic now renders club identity logos inside semantic from/to slots
+  // rather than through the generic Moveable foreground-logo layer.
+  const transferLogo = artboardRoot.locator('[data-semantic-logo-slot="from-club"] img').first();
+  await transferLogo.waitFor({ state: 'attached', timeout: 5_000 });
+  const transferLogoOk = await transferLogo.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0);
+  if (!transferLogoOk) throw new Error('Phase 2: semantic Transfer Graphic club logo is broken.');
 
   const brandLogo = artboardRoot.locator('img[alt="BasitBiOyun"]').first();
   await brandLogo.waitFor({ state: 'attached', timeout: 5_000 });
