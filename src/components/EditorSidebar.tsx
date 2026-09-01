@@ -11,6 +11,12 @@ import {
   applyBrandPreset,
 } from '../services/brandPresets';
 import {
+  applyTemplateVariant,
+  getActiveTemplateVariantId,
+  getTemplateVariants,
+  TemplateVariantId,
+} from '../services/templateVariants';
+import {
   DEFAULT_TEMPLATE_TYPOGRAPHY,
   TemplateTypographyRole,
 } from '../services/templateTypography';
@@ -53,9 +59,15 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const [entityDatabaseOpen, setEntityDatabaseOpen] = useState(false);
   const activeTemplate = project.templates[project.templateType] || project.templates['scouting-report'];
   const currentTypography = (activeTemplate.layout as any)?.typography || DEFAULT_TEMPLATE_TYPOGRAPHY;
+  const templateVariants = getTemplateVariants(project.templateType);
+  const activeVariantId = getActiveTemplateVariantId(project);
 
   const applyPreset = (presetId: BrandPresetId) => {
     onChange(applyBrandPreset(project, presetId));
+  };
+
+  const applyVariant = (variantId: TemplateVariantId) => {
+    onChange(applyTemplateVariant(project, variantId));
   };
 
   const updateTypography = (role: TemplateTypographyRole, value: number) => {
@@ -120,6 +132,50 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
         >
           {isTr ? 'Varlık Kütüphanesi' : 'Asset Library'}
         </button>
+
+        {templateVariants.length > 0 && (
+          <details
+            className="group pointer-events-auto rounded-xl border border-violet-800/80 bg-violet-950/90 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[calc(100vw-24px)] sm:open:w-[330px] max-w-[330px]"
+            data-testid="template-variants"
+          >
+            <summary
+              className="cursor-pointer select-none px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-violet-300 flex items-center justify-between gap-2"
+              data-testid="template-variants-toggle"
+            >
+              <span>{isTr ? 'Şablon Varyantları' : 'Template Variants'}</span>
+              <span className="hidden sm:inline text-[9px] font-bold tracking-normal normal-case text-violet-400/70">{templateVariants.length}</span>
+            </summary>
+
+            <div className="w-[calc(100vw-24px)] sm:w-[330px] max-w-[330px] border-t border-violet-900/70 p-3 space-y-2 max-h-[38vh] overflow-y-auto">
+              <div className="text-[10px] leading-relaxed text-neutral-400">
+                {isTr
+                  ? 'Aynı içerik ve görselleri kullanır. Yalnızca kompozisyon değişir ve undo/redo ile geri alınabilir.'
+                  : 'Reuses the same content and visual assets. Only the composition changes and it remains undoable.'}
+              </div>
+
+              {templateVariants.map((variant) => {
+                const active = activeVariantId === variant.id;
+                return (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    onClick={() => applyVariant(variant.id)}
+                    aria-pressed={active}
+                    data-testid={`template-variant-${variant.id}`}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                      active
+                        ? 'border-violet-400/80 bg-violet-500/15 text-white'
+                        : 'border-neutral-800 bg-neutral-900/80 text-neutral-300 hover:border-violet-800 hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="text-[11px] font-black">{isTr ? variant.labelTr : variant.label}</div>
+                    <div className="mt-1 text-[9px] leading-snug text-neutral-500">{isTr ? variant.descriptionTr : variant.description}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </details>
+        )}
 
         <details className="group pointer-events-auto rounded-xl border border-neutral-700/90 bg-neutral-950/95 shadow-2xl backdrop-blur-xl overflow-hidden open:w-[calc(100vw-24px)] sm:open:w-[330px] max-w-[330px]">
           <summary className="cursor-pointer select-none px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center justify-between gap-2">

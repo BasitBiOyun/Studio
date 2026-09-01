@@ -10,6 +10,7 @@ on:
       - 'scripts/phase4-browser-qa-v2.mjs'
       - 'scripts/phase7-browser-qa.mjs'
       - 'scripts/phase8-browser-qa.mjs'
+      - 'scripts/phase9-browser-qa.mjs'
       - '.github/workflows/visual-qa.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -65,6 +66,9 @@ jobs:
 
       - name: Run Phase 8 entity database browser QA
         run: node scripts/phase8-browser-qa.mjs
+
+      - name: Run Phase 9 template variant browser QA
+        run: node scripts/phase9-browser-qa.mjs
 
       - name: Upload visual QA screenshots
         if: always()

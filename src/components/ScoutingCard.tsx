@@ -14,6 +14,10 @@ import {
   usableLogoSrc,
   usablePlayerImageSrc,
 } from '../services/templateVisualPolicy';
+import {
+  getActiveTemplateVariantId,
+  getTemplateVariantVisualMode,
+} from '../services/templateVariants';
 
 import { ScoutingReportView } from './templates/ScoutingReportView';
 import { PlayerComparisonView } from './templates/PlayerComparisonView';
@@ -78,6 +82,8 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
     const outputLanguage = useOutputLanguage();
     const localizedContentRef = useRef<HTMLDivElement>(null);
     const cardInstanceId = useId().replace(/:/g, '');
+    const templateVariant = getActiveTemplateVariantId(project);
+    const variantVisualMode = getTemplateVariantVisualMode(project) || project.visualMode || 'editorial';
 
     useLayoutEffect(() => {
       if (!localizedContentRef.current) return;
@@ -127,6 +133,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
         ref={ref}
         id={interactive ? 'scouting-graphic-root' : undefined}
         data-graphic-root="true"
+        data-template-variant={templateVariant || undefined}
         lang={outputLanguage === 'tr' ? 'tr-TR' : 'en'}
         className="relative select-none overflow-hidden"
         style={{
@@ -146,7 +153,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           bg2={theme.bg2}
           gradientAngle={theme.gradientAngle}
           idPrefix={`${project.id}-${cardInstanceId}`}
-          visualMode={project.visualMode || 'editorial'}
+          visualMode={variantVisualMode}
           watermarkText={project.name || project.sharedData?.player?.name}
           aspectRatio={project.aspectRatio}
           grainEnabled={advancedLayout?.grainEnabled}
