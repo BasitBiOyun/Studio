@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ThemeColors, VisualMode } from '../../types';
 import { scaledTemplateFontSize } from '../../services/templateTypography';
+import { fitTextFontSize } from '../../services/smartTextFit';
 
 interface EditorialHeaderProps {
   categoryBadge?: string;
@@ -30,13 +31,32 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
   const firstName = hasMultipleWords ? nameParts.slice(0, -1).join(' ') : '';
   const lastName = hasMultipleWords ? nameParts[nameParts.length - 1] : title;
 
-  const titleFontSize = useMemo(() => {
-    const len = (lastName || title || '').length;
-    if (len <= 6) return '74px';
-    if (len <= 10) return '64px';
-    if (len <= 14) return '54px';
-    return '46px';
-  }, [lastName, title]);
+  const firstNameFontSize = useMemo(() => fitTextFontSize({
+    text: firstName,
+    preferredPx: 20,
+    minPx: 15,
+    maxLines: 1,
+    charsPerLineAtPreferred: 24,
+    lineHeight: 1,
+  }), [firstName]);
+
+  const titleFontSize = useMemo(() => fitTextFontSize({
+    text: lastName || title,
+    preferredPx: 74,
+    minPx: 46,
+    maxLines: 1,
+    charsPerLineAtPreferred: 6,
+    lineHeight: 0.9,
+  }), [lastName, title]);
+
+  const subtitleFontSize = useMemo(() => fitTextFontSize({
+    text: subtitle || '',
+    preferredPx: 22,
+    minPx: 16,
+    maxLines: 1,
+    charsPerLineAtPreferred: 26,
+    lineHeight: 1,
+  }), [subtitle]);
 
   return (
     <div className={`flex flex-col gap-2 relative z-20 ${className}`}>
@@ -57,40 +77,40 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
         </div>
       )}
 
-      <div className="select-none">
+      <div className="select-none min-w-0">
         {firstName && (
           <div
-            className="font-black uppercase tracking-[0.2em] text-neutral-300 leading-none mb-1 opacity-90"
-            style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(20, layout, 'subtitle', 15, 26) }}
+            className="font-black uppercase tracking-[0.2em] text-neutral-300 leading-none mb-1 opacity-90 truncate"
+            style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(firstNameFontSize, layout, 'subtitle', 15, 26) }}
           >
             {firstName}
           </div>
         )}
 
         <h1
-          className="font-black uppercase tracking-tight leading-[0.9] text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] flex items-baseline gap-3"
+          className="font-black uppercase tracking-tight leading-[0.9] text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] flex items-baseline gap-3 min-w-0"
           style={{
             fontFamily: fontDisplay,
             fontSize: scaledTemplateFontSize(titleFontSize, layout, 'headline', 34, 92),
           }}
         >
-          <span>{lastName}</span>
+          <span className="truncate">{lastName}</span>
         </h1>
       </div>
 
       {subtitle && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
-            className="font-black uppercase tracking-wider leading-none"
+            className="font-black uppercase tracking-wider leading-none truncate min-w-0"
             style={{
               fontFamily: fontDisplay,
               color: theme.primaryAccent,
-              fontSize: scaledTemplateFontSize(22, layout, 'subtitle', 16, 30),
+              fontSize: scaledTemplateFontSize(subtitleFontSize, layout, 'subtitle', 16, 30),
             }}
           >
             {subtitle}
           </div>
-          {categoryBadge && <div className="h-[2px] w-6 rounded-full" style={{ backgroundColor: theme.primaryAccent }} />}
+          {categoryBadge && <div className="h-[2px] w-6 rounded-full flex-shrink-0" style={{ backgroundColor: theme.primaryAccent }} />}
         </div>
       )}
 
