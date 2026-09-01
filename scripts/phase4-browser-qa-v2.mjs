@@ -39,7 +39,7 @@ async function openTemplate(page, name) {
 }
 
 function logoCard(page, label) {
-  return page.getByText(label, { exact: true }).locator('xpath=../..');
+  return page.locator('.bbo-sidebar-v3:visible').first().getByText(label, { exact: true }).locator('xpath=../..');
 }
 
 async function clearLogo(page, label) {
