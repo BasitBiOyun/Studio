@@ -1,3 +1,5 @@
+import { fitTextFontSize } from './smartTextFit';
+
 export const MAX_MATCH_PREVIEW_FORM = 5;
 export const MAX_MATCH_PREVIEW_KEYS = 3;
 
@@ -21,33 +23,26 @@ export function tacticalDecidersLabel(count: number): string {
 }
 
 export function matchPreviewTitleFontSize(team1: string, team2: string, isWide = false): string {
-  const length = `${team1 || ''} VS ${team2 || ''}`.trim().length;
-
-  if (isWide) {
-    if (length <= 20) return '78px';
-    if (length <= 30) return '66px';
-    if (length <= 42) return '56px';
-    if (length <= 54) return '48px';
-    return '42px';
-  }
-
-  if (length <= 20) return '100px';
-  if (length <= 30) return '88px';
-  if (length <= 42) return '76px';
-  if (length <= 54) return '64px';
-  return '56px';
+  return fitTextFontSize({
+    text: `${team1 || ''} VS ${team2 || ''}`.trim(),
+    preferredPx: isWide ? 78 : 100,
+    minPx: isWide ? 42 : 56,
+    maxLines: 2,
+    charsPerLineAtPreferred: 10,
+    lineHeight: 0.92,
+    containerHeightPx: isWide ? 155 : 195,
+  });
 }
 
 export function matchPreviewTeamFontSize(teamName: string, isWide = false): string {
-  const length = (teamName || '').trim().length;
-  if (isWide) {
-    if (length <= 12) return '40px';
-    if (length <= 20) return '34px';
-    return '30px';
-  }
-  if (length <= 12) return '48px';
-  if (length <= 20) return '42px';
-  return '36px';
+  return fitTextFontSize({
+    text: teamName,
+    preferredPx: isWide ? 40 : 48,
+    minPx: isWide ? 30 : 36,
+    maxLines: 1,
+    charsPerLineAtPreferred: 12,
+    lineHeight: 1,
+  });
 }
 
 export interface MatchTiming {
