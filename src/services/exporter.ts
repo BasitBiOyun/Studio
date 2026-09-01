@@ -117,6 +117,35 @@ function downloadBlob(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
+function snapOptions(
+  scaleMultiplier: 1 | 2 | 4,
+  formatName: 'png' | 'jpeg' | 'webp',
+  quality: number,
+) {
+  return {
+    type: formatName,
+    format: formatName,
+    quality,
+    scale: scaleMultiplier,
+    dpr: 1,
+    reconcile: true,
+    embedFonts: true,
+    fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
+    cache: 'full' as const,
+    compress: true,
+    outerTransforms: true,
+    outerShadows: false,
+    fast: true,
+    exclude: [
+      '.editor-guide',
+      '.selection-outline',
+      '.resize-handle',
+      '.drag-handle',
+      '.editor-overlay'
+    ]
+  };
+}
+
 export async function exportGraphic(
   node: HTMLElement,
   options: ExportOptions
@@ -139,40 +168,21 @@ export async function exportGraphic(
     await waitFrame();
 
     const snapdom = await loadSnapdom();
-
     onProgress?.(`Rendering ${targetWidth} × ${targetHeight} px...`);
 
-    const result = await snapdom(node, {
-      scale: scaleMultiplier,
-      dpr: 1,
-      reconcile: true,
-      embedFonts: true,
-      fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
-      cache: 'full',
-      compress: true,
-      outerTransforms: true,
-      outerShadows: false,
-      fast: false,
-      exclude: [
-        '.editor-guide',
-        '.selection-outline',
-        '.resize-handle',
-        '.drag-handle',
-        '.editor-overlay'
-      ]
-    });
-    
-    const filename = options.filename || `Graphic_${targetWidth}x${targetHeight}.${formatConfig.extension}`;
-    
-    onProgress?.('Downloading...');
-
-    const blob = await result.blob({
-      format: formatConfig.formatName as 'png' | 'jpeg' | 'webp',
-      quality: formatConfig.quality
-    });
+    const blob = await snapdom.toBlob(
+      node,
+      snapOptions(
+        scaleMultiplier,
+        formatConfig.formatName as 'png' | 'jpeg' | 'webp',
+        formatConfig.quality,
+      ) as any,
+    );
     if (!blob) throw new Error('Could not generate image blob');
-    downloadBlob(blob, filename);
 
+    const filename = options.filename || `Graphic_${targetWidth}x${targetHeight}.${formatConfig.extension}`;
+    onProgress?.('Downloading...');
+    downloadBlob(blob, filename);
     onProgress?.('Done!');
   } catch (error) {
     console.error('Export failed:', error);
@@ -195,31 +205,10 @@ export async function copyGraphicToClipboard(
     await waitFrame();
 
     const snapdom = await loadSnapdom();
-
-    const result = await snapdom(node, {
-      scale: 1,
-      dpr: 1,
-      reconcile: true,
-      embedFonts: true,
-      fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
-      cache: 'full',
-      compress: true,
-      outerTransforms: true,
-      outerShadows: false,
-      fast: false,
-      exclude: [
-        '.editor-guide',
-        '.selection-outline',
-        '.resize-handle',
-        '.drag-handle',
-        '.editor-overlay'
-      ]
-    });
-    
-    const blob = await result.blob({
-      format: 'png',
-      quality: 1
-    });
+    const blob = await snapdom.toBlob(
+      node,
+      snapOptions(1, 'png', 1) as any,
+    );
 
     if (!blob) throw new Error('Could not generate image blob');
 

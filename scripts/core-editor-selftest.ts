@@ -76,8 +76,9 @@ for (const fidelityFlag of [
   'embedFonts: true',
   "cache: 'full'",
   'outerTransforms: true',
-  'fast: false',
+  'fast: true',
   'dpr: 1',
+  'snapdom.toBlob',
 ]) {
   assert.ok(exporter.includes(fidelityFlag), `SnapDOM export fidelity flag missing: ${fidelityFlag}`);
 }
