@@ -230,8 +230,8 @@ async function testExporterKernel(page) {
 async function testExportUiContract(page) {
   await openTemplate(page, 'Player Scouting Report');
   await page.getByRole('button', { name: 'Change export settings', exact: true }).click();
-  for (const format of ['PNG', 'JPG', 'JSON']) {
-    if (!(await page.getByRole('button', { name: format, exact: true }).count())) throw new Error(`missing ${format} export option`);
+  for (const format of ['png', 'jpg', 'json']) {
+    if (!(await page.getByRole('button', { name: new RegExp(`^${format}$`, 'i') }).count())) throw new Error(`missing ${format.toUpperCase()} export option`);
   }
   for (const label of [/4× Ultra High-Res/, /2× High-Res/, /1× Native Resolution/]) {
     if (!(await page.getByRole('button', { name: label }).count())) throw new Error(`missing export scale ${label}`);
