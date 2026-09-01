@@ -11,7 +11,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "sync:clubs": "node scripts/sync-uefa-club-catalogue.cjs",
     "test:data-layer": "tsx scripts/data-layer-selftest.ts && tsx scripts/data-migration-selftest.ts",
-    "test:templates": "tsx scripts/template-selftest.ts && tsx scripts/thread-cover-selftest.ts && tsx scripts/match-result-selftest.ts && tsx scripts/team-profile-selftest.ts",
+    "test:templates": "tsx scripts/template-selftest.ts && tsx scripts/thread-cover-selftest.ts && tsx scripts/match-result-selftest.ts && tsx scripts/team-profile-selftest.ts && tsx scripts/phase3-acceptance-selftest.ts",
     "test:sidebar": "tsx scripts/sidebar-runtime-selftest.ts",
     "test:core": "tsx scripts/core-editor-selftest.ts && tsx scripts/template-pack-language-selftest.ts && tsx scripts/turkish-output-selftest.ts && tsx scripts/visual-infrastructure-selftest.ts",
     "test:responsive": "tsx scripts/responsive-selftest.ts",

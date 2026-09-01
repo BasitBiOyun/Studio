@@ -2,35 +2,19 @@ import React from 'react';
 import { Project } from '../../types';
 import { EditorialFooter } from '../design/EditorialFooter';
 import { IconArrowRight, IconCheck, IconCash, IconFileCertificate } from '@tabler/icons-react';
-import {
-  formatTransferPlayerMeta,
-  transferHeadlineFontSize,
-  transferPlayerLineFontSize,
-  visibleTransferConditions,
-} from '../../services/transfer';
+import { formatTransferPlayerMeta, transferHeadlineFontSize, transferPlayerLineFontSize, visibleTransferConditions } from '../../services/transfer';
 import { usableLogoSrc } from '../../services/templateVisualPolicy';
+import { scaledTemplateFontSize } from '../../services/templateTypography';
 
-interface TemplateProps {
-  project: Project;
-}
+interface TemplateProps { project: Project; }
 
 export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['transfer-graphic'];
   const { credits } = project.sharedData;
   const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
-  const { transferData } = templateContent;
-  const data = transferData || {
-    player: project.sharedData?.player,
-    headline: 'HERE WE GO!',
-    badgeText: 'OFFICIAL TRANSFER',
-    transferFee: '€65,000,000',
-    contractLength: '5-YEAR CONTRACT',
-    fromClub: 'OLD CLUB',
-    toClub: 'NEW CLUB',
-    detailsSummary: 'Total agreement reached between clubs.',
-    keyConditions: ['Agreement completed', 'Medical passed'],
+  const data = templateContent.transferData || {
+    player: project.sharedData?.player, headline: 'HERE WE GO!', badgeText: 'OFFICIAL TRANSFER', transferFee: '€65,000,000', contractLength: '5-YEAR CONTRACT', fromClub: 'OLD CLUB', toClub: 'NEW CLUB', detailsSummary: 'Total agreement reached between clubs.', keyConditions: ['Agreement completed', 'Medical passed'],
   };
-
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
   const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const playerMeta = formatTransferPlayerMeta(data.player);
@@ -45,225 +29,54 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const fromClubLogoSrc = fromClubLogo?.visible ? usableLogoSrc(fromClubLogo.src) : '';
   const toClubLogoSrc = toClubLogo?.visible ? usableLogoSrc(toClubLogo.src) : '';
 
-  const renderClubIdentity = (
-    side: 'from-club' | 'to-club',
-    label: string,
-    clubName: string,
-    logoSrc: string,
-    logoName?: string,
-    logoOpacity = 100,
-  ) => {
+  const renderClubIdentity = (side: 'from-club' | 'to-club', label: string, clubName: string, logoSrc: string, logoName?: string, logoOpacity = 100) => {
     const isDestination = side === 'to-club';
-
     return (
-      <div
-        className={`min-w-0 flex-1 flex flex-col ${isDestination ? 'items-end text-right' : 'items-start text-left'}`}
-        data-semantic-logo-slot={side}
-      >
-        {logoSrc && (
-          <div className={`${isWide ? 'w-[82px] h-[82px]' : 'w-[108px] h-[108px]'} mb-2 flex items-center justify-center`}>
-            <img
-              src={logoSrc}
-              alt={logoName || `${clubName} logo`}
-              className="max-w-full max-h-full object-contain drop-shadow-2xl"
-              style={{ opacity: logoOpacity / 100 }}
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        )}
-        <div className="text-[11px] font-black uppercase tracking-widest text-neutral-400">
-          {label}
-        </div>
-        <div
-          className={`${isWide ? 'text-[23px]' : 'text-[28px]'} font-black uppercase tracking-tight leading-tight break-words max-w-full`}
-          style={{
-            fontFamily: fontDisplay,
-            color: isDestination ? theme.primaryAccent : '#ffffff',
-          }}
-        >
-          {clubName || '—'}
-        </div>
+      <div className={`min-w-0 flex-1 flex flex-col ${isDestination ? 'items-end text-right' : 'items-start text-left'}`} data-semantic-logo-slot={side}>
+        {logoSrc && <div className={`${isWide ? 'w-[82px] h-[82px]' : 'w-[108px] h-[108px]'} mb-2 flex items-center justify-center`}><img src={logoSrc} alt={logoName || `${clubName} logo`} className="max-w-full max-h-full object-contain drop-shadow-2xl" style={{ opacity: logoOpacity / 100 }} referrerPolicy="no-referrer" /></div>}
+        <div className="text-[11px] font-black uppercase tracking-widest text-neutral-400">{label}</div>
+        <div className="font-black uppercase tracking-tight leading-tight break-words max-w-full" style={{ fontFamily: fontDisplay, color: isDestination ? theme.primaryAccent : '#ffffff', fontSize: scaledTemplateFontSize(isWide ? 23 : 28, advancedLayout, 'subtitle', 17, 36) }}>{clubName || '—'}</div>
       </div>
     );
   };
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : 'p-14 md:p-16'} select-none`}>
-      {/* Transfer status + player context. Keep this compact so the headline owns the page. */}
       <div>
         <div className="flex items-center gap-3 mb-2">
-          {data.badgeText && (
-            <span
-              className="px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase border"
-              style={{
-                backgroundColor: `${theme.primaryAccent}20`,
-                borderColor: `${theme.primaryAccent}50`,
-                color: theme.primaryAccent,
-              }}
-            >
-              {data.badgeText}
-            </span>
-          )}
-          <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-            {playerMeta}
-          </span>
+          {data.badgeText && <span className="px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase border" style={{ backgroundColor: `${theme.primaryAccent}20`, borderColor: `${theme.primaryAccent}50`, color: theme.primaryAccent }}>{data.badgeText}</span>}
+          <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">{playerMeta}</span>
         </div>
-
-        <h1
-          className="font-black uppercase tracking-tight text-white leading-[0.88] drop-shadow-lg"
-          style={{
-            fontFamily: fontDisplay,
-            color: theme.primaryAccent,
-            fontSize: transferHeadlineFontSize(data.headline, isWide),
-          }}
-        >
-          {data.headline}
-        </h1>
-
-        <div
-          className="font-black uppercase tracking-tight text-white mt-1"
-          style={{
-            fontFamily: fontDisplay,
-            fontSize: transferPlayerLineFontSize(data.player.name, data.toClub, isWide),
-          }}
-        >
-          {data.player.name} ➔ {data.toClub}
-        </div>
+        <h1 className="font-black uppercase tracking-tight text-white leading-[0.88] drop-shadow-lg" style={{ fontFamily: fontDisplay, color: theme.primaryAccent, fontSize: scaledTemplateFontSize(transferHeadlineFontSize(data.headline, isWide), advancedLayout, 'headline', 34, 120) }}>{data.headline}</h1>
+        <div className="font-black uppercase tracking-tight text-white mt-1" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(transferPlayerLineFontSize(data.player.name, data.toClub, isWide), advancedLayout, 'subtitle', 22, 60) }}>{data.player.name} ➔ {data.toClub}</div>
       </div>
 
-      {/* Main Content Area */}
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-5 my-4' : 'gap-8 my-6'} items-center`}>
-        {/* Left Data Column */}
         <div className={`col-span-8 flex flex-col ${isWide ? 'gap-4' : 'gap-6'} max-w-[1300px]`}>
-          {/* Club Transition Flow. Logo slots 0/1 are semantic from/to identities, never interchangeable. */}
           {hasClubFlow && (
-            <div
-              className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md flex items-center justify-between shadow-2xl`}
-              style={{
-                backgroundColor: 'rgba(10, 14, 26, 0.9)',
-                borderColor: `${theme.primaryAccent}40`,
-              }}
-            >
-              {renderClubIdentity(
-                'from-club',
-                'Departing Club',
-                data.fromClub,
-                fromClubLogoSrc,
-                fromClubLogo?.name,
-                fromClubLogo?.opacity,
-              )}
-
-              <div
-                className={`${isWide ? 'w-12 h-12' : 'w-14 h-14'} mx-5 rounded-2xl flex items-center justify-center border text-white shadow-xl flex-shrink-0`}
-                style={{
-                  backgroundColor: `${theme.primaryAccent}25`,
-                  borderColor: `${theme.primaryAccent}60`,
-                  color: theme.primaryAccent,
-                }}
-              >
-                <IconArrowRight size={isWide ? 27 : 32} />
-              </div>
-
-              {renderClubIdentity(
-                'to-club',
-                'New Club',
-                data.toClub,
-                toClubLogoSrc,
-                toClubLogo?.name,
-                toClubLogo?.opacity,
-              )}
+            <div className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md flex items-center justify-between shadow-2xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.9)', borderColor: `${theme.primaryAccent}40` }}>
+              {renderClubIdentity('from-club', 'Departing Club', data.fromClub, fromClubLogoSrc, fromClubLogo?.name, fromClubLogo?.opacity)}
+              <div className={`${isWide ? 'w-12 h-12' : 'w-14 h-14'} mx-5 rounded-2xl flex items-center justify-center border text-white shadow-xl flex-shrink-0`} style={{ backgroundColor: `${theme.primaryAccent}25`, borderColor: `${theme.primaryAccent}60`, color: theme.primaryAccent }}><IconArrowRight size={isWide ? 27 : 32} /></div>
+              {renderClubIdentity('to-club', 'New Club', data.toClub, toClubLogoSrc, toClubLogo?.name, toClubLogo?.opacity)}
             </div>
           )}
 
-          {/* Deal value and contract terms. Omitted cleanly when data is unavailable. */}
           {hasFinancials && (
             <div className={`grid ${hasFee && hasContract ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
-              {hasFee && (
-                <div
-                  className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`}
-                  style={{
-                    backgroundColor: 'rgba(10, 14, 26, 0.85)',
-                    borderColor: `${theme.primaryAccent}30`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-2 text-neutral-400">
-                    <IconCash size={isWide ? 16 : 20} style={{ color: theme.primaryAccent }} />
-                    <span className="text-[12px] font-black uppercase tracking-widest">
-                      Transfer Fee
-                    </span>
-                  </div>
-                  <div
-                    className={`${isWide ? 'text-[40px]' : 'text-[52px]'} font-black uppercase tracking-tight text-white leading-none tabular-nums`}
-                    style={{ fontFamily: fontDisplay }}
-                  >
-                    {data.transferFee}
-                  </div>
-                </div>
-              )}
-
-              {hasContract && (
-                <div
-                  className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`}
-                  style={{
-                    backgroundColor: 'rgba(10, 14, 26, 0.85)',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-2 text-neutral-400">
-                    <IconFileCertificate size={isWide ? 16 : 20} style={{ color: theme.primaryAccent }} />
-                    <span className="text-[12px] font-black uppercase tracking-widest">
-                      Contract Terms
-                    </span>
-                  </div>
-                  <div
-                    className={`${isWide ? 'text-[34px]' : 'text-[42px]'} font-black uppercase tracking-tight text-white leading-none`}
-                    style={{ fontFamily: fontDisplay }}
-                  >
-                    {data.contractLength}
-                  </div>
-                </div>
-              )}
+              {hasFee && <div className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.85)', borderColor: `${theme.primaryAccent}30` }}><div className="flex items-center gap-2 mb-2 text-neutral-400"><IconCash size={isWide ? 16 : 20} style={{ color: theme.primaryAccent }} /><span className="text-[12px] font-black uppercase tracking-widest">Transfer Fee</span></div><div className="font-black uppercase tracking-tight text-white leading-none tabular-nums" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 40 : 52, advancedLayout, 'stat', 28, 66) }}>{data.transferFee}</div></div>}
+              {hasContract && <div className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }}><div className="flex items-center gap-2 mb-2 text-neutral-400"><IconFileCertificate size={isWide ? 16 : 20} style={{ color: theme.primaryAccent }} /><span className="text-[12px] font-black uppercase tracking-widest">Contract Terms</span></div><div className="font-black uppercase tracking-tight text-white leading-none" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 34 : 42, advancedLayout, 'stat', 24, 54) }}>{data.contractLength}</div></div>}
             </div>
           )}
 
-          {/* Summary + maximum three essential conditions. */}
           {hasDetails && (
-            <div
-              className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`}
-              style={{
-                backgroundColor: 'rgba(10, 14, 26, 0.85)',
-                borderColor: 'rgba(255, 255, 255, 0.08)',
-              }}
-            >
-              {data.detailsSummary && (
-                <p className={`${isWide ? 'text-[17px]' : 'text-[20px]'} text-white font-medium leading-relaxed ${conditions.length ? 'mb-4' : ''}`}>
-                  {data.detailsSummary}
-                </p>
-              )}
-
-              {conditions.length > 0 && (
-                <div className="flex flex-col gap-2.5">
-                  {conditions.map((condition, idx) => (
-                    <div key={idx} className={`flex items-center gap-3 ${isWide ? 'text-[15px]' : 'text-[17px]'} text-neutral-200 font-semibold`}>
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-black flex-shrink-0"
-                        style={{ backgroundColor: theme.primaryAccent }}
-                      >
-                        <IconCheck size={14} strokeWidth={3} />
-                      </div>
-                      <span>{condition}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md shadow-xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.85)', borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+              {data.detailsSummary && <p className={`text-white font-medium leading-relaxed ${conditions.length ? 'mb-4' : ''}`} style={{ fontSize: scaledTemplateFontSize(isWide ? 17 : 20, advancedLayout, 'body', 13, 26) }}>{data.detailsSummary}</p>}
+              {conditions.length > 0 && <div className="flex flex-col gap-2.5">{conditions.map((condition, idx) => <div key={idx} className="flex items-center gap-3 text-neutral-200 font-semibold" style={{ fontSize: scaledTemplateFontSize(isWide ? 15 : 17, advancedLayout, 'body', 12, 22) }}><div className="w-5 h-5 rounded-full flex items-center justify-center text-black flex-shrink-0" style={{ backgroundColor: theme.primaryAccent }}><IconCheck size={14} strokeWidth={3} /></div><span>{condition}</span></div>)}</div>}
             </div>
           )}
         </div>
-
-        {/* Right side remains open for the player cutout. */}
         <div className="col-span-4 h-full pointer-events-none" />
       </div>
-
       <EditorialFooter credits={credits} theme={theme} />
     </div>
   );
