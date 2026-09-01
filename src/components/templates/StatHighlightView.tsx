@@ -9,6 +9,7 @@ import {
   statHighlightSubjectMeta,
   visibleStatHighlightMetrics,
 } from '../../services/statHighlight';
+import { usablePlayerImageSrc } from '../../services/templateVisualPolicy';
 
 interface TemplateProps {
   project: Project;
@@ -17,7 +18,7 @@ interface TemplateProps {
 export const StatHighlightView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['stat-highlight'];
   const { player, credits } = project.sharedData;
-  const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
+  const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
   const { statHighlightData } = templateContent;
   const data = statHighlightData || {
     heroStat: '94.2%',
@@ -30,7 +31,8 @@ export const StatHighlightView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
+  const hasSubjectImage = Boolean(usablePlayerImageSrc(visuals.playerImageSrc));
   const explicitSubject = String((data as any).subject || '').trim();
   const subject = explicitSubject || player?.name || 'STAT HIGHLIGHT';
   const explicitSubjectMeta = String((data as any).subjectContext || '').trim();
@@ -92,7 +94,9 @@ export const StatHighlightView: React.FC<TemplateProps> = ({ project }) => {
       </div>
 
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-5 my-4' : 'gap-8 my-6'} items-center`}>
-        <div className={`col-span-8 flex flex-col ${isWide ? 'gap-4' : 'gap-6'} max-w-[1300px]`}>
+        <div
+          className={`${hasSubjectImage ? 'col-span-8 max-w-[1300px]' : 'col-span-12'} flex flex-col ${isWide ? 'gap-4' : 'gap-6'}`}
+        >
           <div
             className={`rounded-3xl ${isWide ? 'p-6' : 'p-8'} border backdrop-blur-md relative overflow-hidden shadow-2xl`}
             style={{
@@ -170,7 +174,7 @@ export const StatHighlightView: React.FC<TemplateProps> = ({ project }) => {
           )}
         </div>
 
-        <div className="col-span-4 h-full pointer-events-none" />
+        {hasSubjectImage && <div className="col-span-4 h-full pointer-events-none" />}
       </div>
 
       <EditorialFooter credits={credits} theme={theme} />
