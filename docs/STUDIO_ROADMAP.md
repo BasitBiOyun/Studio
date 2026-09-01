@@ -20,6 +20,7 @@ This document is the source of truth for autonomous Studio development. Work mus
 10. Preserve Turkish and English behavior. Turkish typography must respect Turkish dotted/dotless I casing.
 11. Preserve PNG/JPG export behavior and ensure preview/export render the same design.
 12. Avoid placeholder player photos or club logos unless a template explicitly calls for one.
+13. Logo placement must be template-aware. Do not use one generic fixed upper-right logo position for every template when the template semantics require team, club or competition logos elsewhere.
 
 ---
 
@@ -43,6 +44,20 @@ Perfect templates in this order:
 11. Quote / Opinion
 12. Thread Cover
 
+### Immediate Phase 3 priority — template-aware club/team/competition logos
+
+These requirements are newly added and are NOT considered complete merely because a template previously received a Phase 3 polish pass. Before Phase 3 can be completed, revisit the affected templates and implement the following semantic logo behavior:
+
+- Transfer Graphic must have distinct `from club` and `to club` logo slots mapped to the correct clubs. The preferred composition is logo-first: a prominent club crest with the club name as a smaller label underneath or adjacent when useful. Do not rely on a generic upper-right logo for transfer identity.
+- Match Preview must support both home and away team logos in the main matchup composition, with each crest clearly attached to the correct team. Use a clean visual separator such as `VS`, a thin divider, or another non-score-like separator between the sides when appropriate.
+- Match Analysis must support both participating team logos in a logical matchup/header area when the analysis concerns two teams. The logos must remain mapped to the correct home/away or left/right team.
+- Match Result must support both team logos and keep each logo, team name, score and scorer information on the correct side. The score itself is the central separator; do not add a dash that could be confused with the score.
+- Tactical Analysis must be scope-aware: use one team logo for a single-team tactical analysis and two correctly mapped team logos for a head-to-head tactical matchup. Do not force two logos when the content is about one team.
+- Team Profile must support the club crest plus a separate optional league/competition logo slot. League/competition identity must not be faked by reusing the club-logo slot.
+- Player Comparison must keep player/team identity visually clear and must never cause one player or club logo to appear in the other player's slot.
+- Across all affected templates, logos must use purposeful template-specific placement rather than all appearing in the same fixed upper-right position.
+- Club/team names may remain as small labels beneath or near crests for recognition and accessibility; avoid oversized duplicate club names when the logo already carries the main visual hierarchy.
+
 ### Requirements
 
 - Each template must use the full canvas intelligently.
@@ -52,8 +67,10 @@ Perfect templates in this order:
 - Match Result scorers must sit beneath the correct team.
 - Match Analysis and Tactical Analysis must use full-width content layouts unless an optional image is intentionally present.
 - Player Comparison must clearly support two players and two images.
-- Team Profile must support crest-as-background without destroying text hierarchy.
-- Transfer Graphic must support player image plus from/to club logos cleanly.
+- Team Profile must support crest-as-background without destroying text hierarchy and must allow a separate league/competition identity mark.
+- Transfer Graphic must support player image plus correctly mapped from/to club logos cleanly.
+- Match Preview, Match Analysis and Match Result must support two correctly mapped team crests where two teams are present.
+- Tactical Analysis must support one-team and two-team logo states according to analysis scope.
 - Headline, subtitle, body, verdict, stat, label and footer hierarchy must be consistent.
 - No text clipping at supported aspect ratios.
 - Logos and player photos must respect safe zones.
@@ -77,6 +94,11 @@ Controls must have safe min/max ranges and defaults.
 - Long-name smoke tests pass.
 - TR/EN switching does not break layout.
 - Logo and image optional states look intentional.
+- Transfer Graphic proves from-club crest and to-club crest cannot swap slots.
+- Match Preview, Match Analysis and Match Result prove both team crests render in the correct team slots.
+- Tactical Analysis proves both single-team and two-team logo states behave intentionally.
+- Team Profile proves club crest and league/competition logo can coexist as separate assets without hierarchy or export breakage.
+- No affected template falls back to a meaningless generic upper-right logo placement when a semantic logo slot exists.
 - Studio CI green.
 - Responsive Visual QA green.
 - Vercel production green.
@@ -98,6 +120,8 @@ Goal: make the current Studio dependable before adding major new features.
 - Verify multi-ratio batch export.
 - Verify manual image/logo upload, crop and remove.
 - Verify club logo catalogue selection for Arsenal, Fenerbahçe and Real Madrid as smoke-test clubs.
+- Verify semantic logo-slot persistence and export for Transfer Graphic from/to clubs, Match Preview home/away teams, Match Analysis teams, Match Result teams, Tactical Analysis scope-aware team logos, and Team Profile club/competition logos.
+- Verify changing one team/club logo never overwrites another semantic logo slot.
 - Verify footer BasitBiOyun logo renders in preview and export.
 - Verify social footer toggles.
 - Remove dead legacy sidebar/editor code only when proven unused.
@@ -107,6 +131,7 @@ Goal: make the current Studio dependable before adding major new features.
 
 - No black-screen or freeze regression.
 - No known broken logo selector.
+- No team/club/competition logo mapped to the wrong semantic slot.
 - No broken production assets.
 - Core editor regression tests cover state/history behavior.
 - Studio CI green.
@@ -177,10 +202,10 @@ Goal: stop re-uploading the same assets.
 ### Requirements
 
 - Local-first asset library using IndexedDB or equivalent browser storage.
-- Store reusable player cutouts, club logos and custom images.
+- Store reusable player cutouts, club logos, competition/league logos and custom images.
 - Thumbnail browser with search/name.
 - Add/remove/rename assets.
-- Apply an asset to the currently relevant slot.
+- Apply an asset to the currently relevant semantic slot.
 - Do not require a backend.
 - Avoid duplicate storage using a hash when practical.
 
@@ -202,10 +227,15 @@ Goal: make logo/entity selection reliable and fast.
 - Searchable club catalogue.
 - Searchable competition catalogue.
 - Club record should expose name, country, league and logo where available.
-- Selecting a club must immediately update the intended logo slot and relevant club text only when explicitly chosen.
+- Competition record should expose at minimum canonical name, localized TR/EN display name, country/region where applicable, competition type and logo where available.
+- Competition/league logos must be first-class assets rather than being forced through a club-logo field.
+- Selecting a club must immediately update the intended semantic logo slot and relevant club text only when explicitly chosen.
+- Selecting a competition must update only the intended competition/league identity and logo slot.
 - Competition terminology must localize in TR/EN.
-- Graceful fallback when a remote logo cannot load.
-- Do not silently substitute another club.
+- Graceful fallback when a remote club or competition logo cannot load.
+- Do not silently substitute another club or competition.
+- Team Profile must be able to use both a club crest and a separate league/competition logo from the catalogue.
+- Match templates and Transfer Graphic must consume club selections without losing their home/away/from/to slot semantics.
 
 ### Smoke tests
 
@@ -218,7 +248,9 @@ Goal: make logo/entity selection reliable and fast.
 
 ### Acceptance gates
 
-- Selections render on canvas and export.
+- Club and competition selections render on canvas and export.
+- Team Profile can show the correct club crest and correct league/competition logo simultaneously.
+- Transfer and match template logo-slot mappings remain correct after catalogue selection.
 - CI + visual QA + Vercel green.
 
 ---
@@ -237,11 +269,13 @@ Create controlled variants for high-value templates first:
 
 Variant switching must reuse the same template data and visual assets.
 Do not duplicate project content into independent copies.
+All variants must preserve semantic logo mapping: from/to, home/away, player/team, club/competition identities must not swap or collapse into a generic logo slot.
 
 ### Acceptance gates
 
 - Switching variants is reversible.
 - No data loss.
+- No semantic logo-slot loss or swapping across variants.
 - Existing JSON packs still load.
 - CI + visual QA + Vercel green.
 
@@ -263,11 +297,13 @@ Examples:
 
 Only expose presets valid for the active template.
 Manual overrides should remain possible where the editor supports them.
+Logo placements must remain attached to their semantic team/club/competition identities when layout presets change.
 
 ### Acceptance gates
 
 - Presets never move content outside canvas.
 - Reset returns to a known valid layout.
+- Logo identities do not swap when changing layout presets.
 - CI + visual QA + Vercel green.
 
 ---
@@ -284,6 +320,7 @@ Goal: make JSON packs reliable, discoverable and template-specific.
 - Clear import errors and warnings.
 - Missing fields should preserve template defaults instead of corrupting state.
 - Import must preserve visuals unless schema explicitly includes visual instructions.
+- Where a template supports multiple logos, schemas must keep semantic identities distinct, for example `fromClub`, `toClub`, `homeTeam`, `awayTeam`, `club`, and `competition`, rather than a single ambiguous logo field.
 - Document current example JSON for all 12 templates.
 - Add export-current-data-as-JSON where useful.
 
@@ -291,6 +328,7 @@ Goal: make JSON packs reliable, discoverable and template-specific.
 
 - Round-trip tests for representative templates.
 - Wrong-template imports rejected cleanly.
+- Multi-logo templates preserve the correct logo-to-entity mapping through JSON import/export where visuals are included.
 - CI + visual QA + Vercel green.
 
 ---
@@ -309,11 +347,13 @@ For supported content types, allow one source pack to produce a coordinated set 
 
 Generated outputs must reuse data, brand preset and selected assets where appropriate.
 Do not silently invent missing facts.
+Team/club/competition logo identities must remain correct across generated outputs.
 
 ### Acceptance gates
 
 - Generated projects remain independently editable.
 - Batch export names are deterministic and clean.
+- Generated outputs do not swap or drop semantic team/club/competition logos.
 - CI + visual QA + Vercel green.
 
 ---
@@ -347,12 +387,14 @@ Goal: make design evolution safe.
 - Migrate older saved projects safely.
 - Keep known-good defaults for each template version.
 - Provide recovery/reset-to-current-template-default without deleting unrelated project data.
+- Preserve or safely migrate semantic multi-logo slots introduced for transfer, match and competition-aware templates.
 - Document breaking migrations.
 
 ### Acceptance gates
 
 - Old representative saved projects load without black screen.
 - Migration tests exist.
+- Old projects with legacy generic logo fields recover without silently assigning a logo to the wrong team/club/competition slot.
 - CI + visual QA + Vercel green.
 
 ---
