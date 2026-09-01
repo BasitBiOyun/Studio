@@ -92,7 +92,9 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
           >
             {subtitle}
           </div>
-          <div className="h-[2px] w-6 rounded-full" style={{ backgroundColor: theme.primaryAccent }} />
+          {categoryBadge && (
+            <div className="h-[2px] w-6 rounded-full" style={{ backgroundColor: theme.primaryAccent }} />
+          )}
         </div>
       )}
 
