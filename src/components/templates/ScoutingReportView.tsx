@@ -63,8 +63,21 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
   const subtitle = [player.club, player.positions].filter(Boolean).join(' • ');
   const leftColSpan = 'col-span-8';
   const rightColSpan = 'col-span-4';
-  const visibleStats = stats.slice(0, 6);
-  const statColumns = visibleStats.length > 4 ? 'grid-cols-3' : 'grid-cols-2';
+  const visibleStats = stats
+    .filter((stat) => Boolean((stat.value || '').trim() || (stat.label || '').trim()))
+    .slice(0, 6);
+  const statColumns = visibleStats.length <= 1
+    ? 'grid-cols-1'
+    : visibleStats.length === 2
+      ? 'grid-cols-2'
+      : visibleStats.length === 3
+        ? 'grid-cols-3'
+        : visibleStats.length === 4
+          ? 'grid-cols-2'
+          : 'grid-cols-3';
+  const statCardClass = visibleStats.length === 1
+    ? (isWide ? 'min-h-[112px]' : 'min-h-[140px]')
+    : '';
   const visibleStrengths = strengths.slice(0, 5);
   const visibleDevelopment = development.slice(0, 3);
 
@@ -124,6 +137,7 @@ export const ScoutingReportView: React.FC<TemplateProps> = ({ project }) => {
                     stat={st}
                     theme={theme}
                     fontDisplay={fontDisplay}
+                    className={statCardClass}
                   />
                 ))}
               </div>
