@@ -1,4 +1,4 @@
-import { localizeFootballValue, turkishUppercase } from './footballLocale';
+import { localizeFootballValue } from './footballLocale';
 
 export type OutputLanguage = 'en' | 'tr';
 
@@ -151,6 +151,18 @@ const PHRASE_TR: Array<[RegExp, string]> = [
   [/\bHERE WE GO!?\b/gi, 'TRANSFER'],
 ];
 
+const TURKISH_DISPLAY_WORDS = new Set([
+  'lig', 'ligi', 'ligde', 'liginde', 'analiz', 'analizi', 'sezon', 'sezonu',
+  'veri', 'verileri', 'oyuncu', 'oyuncunun', 'takım', 'takımın', 'kulüp', 'kulübü',
+  'maç', 'maçın', 'gol', 'asist', 'dakika', 'profil', 'profili', 'taktik', 'taktiksel',
+  'değerlendirme', 'özet', 'sağ', 'sol', 'ayak', 'yaş', 'boy', 'organizasyon', 'sıra',
+  'final', 'yarı', 'çeyrek', 'şampiyonlar', 'performans', 'hücum', 'savunma', 'geçiş',
+  'pas', 'şut', 'top', 'saha', 'kanat', 'orta', 'forvet', 'santrfor', 'stoper', 'bek',
+  'alan', 'alanları', 'güçlü', 'yönler', 'gelişim', 'başlık', 'rapor', 'istatistik',
+]);
+const TURKISH_SPECIFIC_CHARS = /[çğıöşüÇĞİÖŞÜ]/u;
+const WORD_PATTERN = /\p{L}[\p{L}\p{M}'’.-]*/gu;
+
 function isUppercaseContext(node: Text, root: HTMLElement) {
   let element: HTMLElement | null = node.parentElement;
   while (element && element !== root.parentElement) {
@@ -159,6 +171,27 @@ function isUppercaseContext(node: Text, root: HTMLElement) {
     element = element.parentElement;
   }
   return false;
+}
+
+export function uppercaseLocalizedText(original: string, translated: string): string {
+  const originalWords = new Set(
+    (original.match(WORD_PATTERN) || []).map((word) => word.toLocaleLowerCase('en-US')),
+  );
+  const sourceLooksTurkish = TURKISH_SPECIFIC_CHARS.test(original);
+
+  return translated.replace(WORD_PATTERN, (word) => {
+    const trKey = word.toLocaleLowerCase('tr-TR');
+    if (TURKISH_SPECIFIC_CHARS.test(word) || TURKISH_DISPLAY_WORDS.has(trKey)) {
+      return word.toLocaleUpperCase('tr-TR');
+    }
+
+    const enKey = word.toLocaleLowerCase('en-US');
+    if (originalWords.has(enKey)) {
+      return word.toLocaleUpperCase(sourceLooksTurkish ? 'tr-TR' : 'en-US');
+    }
+
+    return word.toLocaleUpperCase('tr-TR');
+  });
 }
 
 export function getOutputLanguage(): OutputLanguage {
@@ -219,7 +252,7 @@ export function localizeCardElement(root: HTMLElement, language: OutputLanguage)
     const current = textNode.nodeValue || '';
     let translated = translateCardText(current, language);
     if (isUppercaseContext(textNode, root)) {
-      translated = turkishUppercase(translated);
+      translated = uppercaseLocalizedText(current, translated);
     }
     if (translated !== current) textNode.nodeValue = translated;
   }

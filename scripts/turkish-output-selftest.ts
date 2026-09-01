@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DEFAULT_PROJECT } from '../src/constants/presets';
 import { resolveCountryFlag, turkishUppercase } from '../src/services/footballLocale';
-import { translateCardText } from '../src/services/outputLanguage';
+import { translateCardText, uppercaseLocalizedText } from '../src/services/outputLanguage';
 import { translateStudioText } from '../src/services/studioLocale';
 import { applyPlayerPackToProject, parsePlayerPack } from '../src/services/playerPack';
 
@@ -19,6 +19,11 @@ assert.equal(translateStudioText('Data & Text', 'tr'), 'Veri ve Metin');
 assert.equal(translateStudioText('Match Preview', 'tr'), 'Maç Önizlemesi');
 assert.equal(translateStudioText('2× Enhance', 'tr'), '2× Netleştir');
 assert.equal(turkishUppercase('envanteri'), 'ENVANTERİ');
+assert.equal(uppercaseLocalizedText('Manchester United', 'Manchester United'), 'MANCHESTER UNITED');
+assert.equal(uppercaseLocalizedText('Premier League', 'Premier Lig'), 'PREMIER LİG');
+assert.equal(uppercaseLocalizedText('Premier Lig', 'Premier Lig'), 'PREMIER LİG');
+assert.equal(uppercaseLocalizedText('Gelişim Alanları', 'Gelişim Alanları'), 'GELİŞİM ALANLARI');
+assert.equal(uppercaseLocalizedText('Vinicius Jr', 'Vinicius Jr'), 'VINICIUS JR');
 
 const packJson = JSON.stringify({
   schemaVersion: 'studio-pack-v1',
@@ -59,5 +64,11 @@ const transferAutocomplete = fs.readFileSync(path.join(root, 'src/services/trans
 assert.ok(transferAutocomplete.includes("if (label.textContent !== desiredLabel)"));
 assert.ok(transferAutocomplete.includes('requestAnimationFrame'));
 assert.ok(transferAutocomplete.includes('if (frameId !== null) return'));
+
+const exporter = fs.readFileSync(path.join(root, 'src/services/exporter.ts'), 'utf8');
+assert.ok(exporter.includes("TURKISH_GLYPH_SAMPLE = 'ÇĞİÖŞÜçğıöşü'"));
+assert.ok(exporter.includes("'fonts.googleapis.com', 'fonts.gstatic.com'"));
+assert.ok(exporter.includes('document.fonts.load'));
+assert.ok(exporter.includes('fontStylesheetDomains: FONT_STYLESHEET_DOMAINS'));
 
 console.log('Turkish output regression tests passed.');

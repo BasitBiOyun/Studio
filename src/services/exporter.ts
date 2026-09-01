@@ -1,5 +1,8 @@
 import { CanvasDimensions, ExportFormat } from '../types';
 
+const TURKISH_GLYPH_SAMPLE = 'ÇĞİÖŞÜçğıöşü';
+const FONT_STYLESHEET_DOMAINS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+
 export function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -30,10 +33,27 @@ function waitFrame(): Promise<void> {
   );
 }
 
-async function waitForFonts(): Promise<void> {
+async function waitForFonts(node?: HTMLElement): Promise<void> {
   if (!document.fonts) return;
   try {
     await document.fonts.ready;
+    if (!node) return;
+
+    const descriptors = new Set<string>();
+    const elements: HTMLElement[] = [node, ...Array.from(node.querySelectorAll<HTMLElement>('*'))];
+    for (const element of elements) {
+      const style = window.getComputedStyle(element);
+      if (!style.fontFamily) continue;
+      descriptors.add(`${style.fontStyle || 'normal'} ${style.fontWeight || '400'} 32px ${style.fontFamily}`);
+    }
+
+    await Promise.all(
+      Array.from(descriptors).map(async (descriptor) => {
+        try {
+          await document.fonts.load(descriptor, TURKISH_GLYPH_SAMPLE);
+        } catch {}
+      }),
+    );
   } catch {}
 }
 
@@ -101,7 +121,7 @@ export async function exportGraphic(
   try {
     onProgress?.(`Preparing ${targetWidth} × ${targetHeight} px export...`);
     
-    await waitForFonts();
+    await waitForFonts(node);
     await waitForAllImages(node);
     await waitFrame();
 
@@ -114,6 +134,7 @@ export async function exportGraphic(
       dpr: 1,
       reconcile: true,
       embedFonts: true,
+      fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
       cache: 'full',
       compress: true,
       outerTransforms: true,
@@ -155,7 +176,7 @@ export async function copyGraphicToClipboard(
       throw new Error('Clipboard API is not supported in this browser');
     }
     
-    await waitForFonts();
+    await waitForFonts(node);
     await waitForAllImages(node);
     await waitFrame();
 
@@ -166,6 +187,7 @@ export async function copyGraphicToClipboard(
       dpr: 1,
       reconcile: true,
       embedFonts: true,
+      fontStylesheetDomains: FONT_STYLESHEET_DOMAINS,
       cache: 'full',
       compress: true,
       outerTransforms: true,
