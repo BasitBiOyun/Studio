@@ -36,7 +36,7 @@ export const MatchResultView: React.FC<TemplateProps> = ({ project }) => {
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
   const fontBody = advancedLayout?.fontBody || "'Plus Jakarta Sans', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const headerContext = matchResultHeaderContext(data.competition, data.stage);
   const scorers1 = visibleMatchResultScorers(data.scorers1 || []);
   const scorers2 = visibleMatchResultScorers(data.scorers2 || []);
