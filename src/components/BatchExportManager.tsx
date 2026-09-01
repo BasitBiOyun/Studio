@@ -5,7 +5,7 @@ import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { exportGraphic } from '../services/exporter';
 import { ScoutingCard } from './ScoutingCard';
 
-const BATCH_RATIOS: CanvasAspectRatio[] = ['1:1', '4:5', '16:9', 'x-landscape'];
+const BATCH_RATIOS: CanvasAspectRatio[] = ['1:1', '4:5', '16:9', '9:16'];
 
 export interface BatchExportOptions {
   scaleMultiplier: 1 | 2 | 4;

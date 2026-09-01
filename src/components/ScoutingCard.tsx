@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { Project, CanvasDimensions } from '../types';
 import { CANVAS_DIMENSIONS } from '../constants/presets';
 import { BackgroundPattern } from './design/BackgroundPattern';
@@ -77,6 +77,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
 
     const outputLanguage = useOutputLanguage();
     const localizedContentRef = useRef<HTMLDivElement>(null);
+    const cardInstanceId = useId().replace(/:/g, '');
 
     useLayoutEffect(() => {
       if (!localizedContentRef.current) return;
@@ -124,7 +125,8 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
     return (
       <div
         ref={ref}
-        id="scouting-graphic-root"
+        id={interactive ? 'scouting-graphic-root' : undefined}
+        data-graphic-root="true"
         lang={outputLanguage === 'tr' ? 'tr-TR' : 'en'}
         className="relative select-none overflow-hidden"
         style={{
@@ -143,7 +145,7 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
           bg1={theme.bg1}
           bg2={theme.bg2}
           gradientAngle={theme.gradientAngle}
-          idPrefix={project.id}
+          idPrefix={`${project.id}-${cardInstanceId}`}
           visualMode={project.visualMode || 'editorial'}
           watermarkText={project.name || project.sharedData?.player?.name}
           aspectRatio={project.aspectRatio}
