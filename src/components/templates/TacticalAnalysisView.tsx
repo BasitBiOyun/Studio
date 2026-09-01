@@ -29,7 +29,7 @@ export const TacticalAnalysisView: React.FC<TemplateProps> = ({ project }) => {
   };
 
   const fontDisplay = advancedLayout?.fontDisplay || "'Barlow Condensed', sans-serif";
-  const isWide = project.aspectRatio === '16:9';
+  const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const principles = visibleTacticalPrinciples(data.corePrinciples);
   const triggers = visibleExecutionTriggers(data.keyInstructions);
   const hasConcept = Boolean(data.tacticalNote?.trim());
