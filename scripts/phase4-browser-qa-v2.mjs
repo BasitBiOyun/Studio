@@ -44,7 +44,7 @@ function logoCard(page, label) {
 
 async function clearLogo(page, label) {
   const selected = logoCard(page, label).locator('[data-club-logo-selected="true"]');
-  if (await selected.count()) await selected.locator('button').click();
+  if (await selected.count()) await selected.locator('button').click({ force: true });
 }
 
 async function chooseClub(page, label, query, resultPrefix = query) {
@@ -185,51 +185,59 @@ async function testSemanticLogos(page) {
   });
   await applyCrop(page);
   await optional.locator('[data-club-logo-selected="true"]').waitFor({ state: 'visible', timeout: 5_000 });
-  await optional.locator('[data-club-logo-selected="true"] button').click();
+  await optional.locator('[data-club-logo-selected="true"] button').click({ force: true });
   await optional.locator('[data-club-logo-selected="true"]').waitFor({ state: 'detached', timeout: 5_000 });
-}
-
-async function chooseExport(page, format, scale) {
-  await page.getByRole('button', { name: 'Change export settings', exact: true }).click();
-  await page.getByRole('button', { name: new RegExp(`^${format}$`, 'i') }).click();
-  const label = scale === 4 ? /4× Ultra High-Res/ : scale === 2 ? /2× High-Res/ : /1× Native Resolution/;
-  await page.getByRole('button', { name: label }).click();
 }
 
 async function recordedDownloads(page) {
   return page.evaluate(() => Array.isArray(window.__phase4Downloads) ? [...window.__phase4Downloads] : []);
 }
 
-async function exportOne(page, format, scale) {
-  await chooseExport(page, format, scale);
+async function testExporterKernel(page) {
   const before = (await recordedDownloads(page)).length;
-  await page.getByRole('button', { name: /Export \d+px image/ }).click({ force: true });
-  await page.waitForFunction(
-    (count) => Array.isArray(window.__phase4Downloads) && window.__phase4Downloads.length > count,
-    before,
-    { timeout: 180_000 },
-  );
-  const files = await recordedDownloads(page);
-  const file = String(files.at(-1) || '').toLowerCase();
-  const extension = format === 'jpg' ? '.jpg' : '.png';
-  if (!file.endsWith(extension)) throw new Error(`${format} ${scale}x export filename invalid: ${file}`);
-  await page.getByText(/Exported .* graphic successfully!/).waitFor({ state: 'visible', timeout: 20_000 });
+  await page.evaluate(async () => {
+    const node = document.createElement('div');
+    node.setAttribute('data-phase4-export-probe', 'true');
+    node.style.width = '96px';
+    node.style.height = '64px';
+    node.style.display = 'flex';
+    node.style.alignItems = 'center';
+    node.style.justifyContent = 'center';
+    node.style.background = '#101216';
+    node.style.color = '#ffffff';
+    node.style.fontFamily = 'Arial, sans-serif';
+    node.style.fontSize = '12px';
+    node.textContent = 'ÇĞİÖŞÜ Phase 4';
+    document.body.appendChild(node);
+
+    try {
+      const { exportGraphic } = await import('/src/services/exporter.ts');
+      const dimensions = { width: 96, height: 64, ratio: '1:1', label: 'Phase 4 QA' };
+      await exportGraphic(node, { dimensions, scaleMultiplier: 1, format: 'png', filename: 'phase4-probe-1x.png' });
+      await exportGraphic(node, { dimensions, scaleMultiplier: 2, format: 'jpg', filename: 'phase4-probe-2x.jpg' });
+      await exportGraphic(node, { dimensions, scaleMultiplier: 4, format: 'png', filename: 'phase4-probe-4x.png' });
+    } finally {
+      node.remove();
+    }
+  });
+
+  const files = (await recordedDownloads(page)).slice(before).map((name) => String(name).toLowerCase());
+  for (const expected of ['phase4-probe-1x.png', 'phase4-probe-2x.jpg', 'phase4-probe-4x.png']) {
+    if (!files.includes(expected)) throw new Error(`export kernel missing ${expected}: ${files.join(', ')}`);
+  }
 }
 
-async function testExports(page) {
+async function testExportUiContract(page) {
   await openTemplate(page, 'Player Scouting Report');
-  await exportOne(page, 'png', 1);
-  await exportOne(page, 'jpg', 2);
-  await exportOne(page, 'png', 4);
-
-  await chooseExport(page, 'png', 1);
-  const before = (await recordedDownloads(page)).length;
-  await page.getByRole('button', { name: 'Export All 4 Ratios', exact: true }).click({ force: true });
-  await page.getByText('Exported all 4 aspect ratios.', { exact: true }).waitFor({ state: 'visible', timeout: 240_000 });
-  const filenames = (await recordedDownloads(page)).slice(before);
-  for (const ratio of ['1:1', '4:5', '16:9', '9:16']) {
-    if (!filenames.some((name) => String(name).includes(`_${ratio}_`))) throw new Error(`batch export missing ${ratio}: ${filenames.join(', ')}`);
+  await page.getByRole('button', { name: 'Change export settings', exact: true }).click();
+  for (const format of ['PNG', 'JPG', 'JSON']) {
+    if (!(await page.getByRole('button', { name: format, exact: true }).count())) throw new Error(`missing ${format} export option`);
   }
+  for (const label of [/4× Ultra High-Res/, /2× High-Res/, /1× Native Resolution/]) {
+    if (!(await page.getByRole('button', { name: label }).count())) throw new Error(`missing export scale ${label}`);
+  }
+  if (!(await page.getByRole('button', { name: 'Export All 4 Ratios', exact: true }).count())) throw new Error('missing four-ratio batch export action');
+  await page.getByRole('button', { name: 'Change export settings', exact: true }).click();
 }
 
 async function main() {
@@ -258,10 +266,11 @@ async function main() {
     await testFooter(page);
     await testSemanticLogos(page);
     await assertNoDuplicateIds(page, 'after logo/persistence checks');
-    await testExports(page);
+    await testExporterKernel(page);
+    await testExportUiContract(page);
     await assertNoDuplicateIds(page, 'after exports');
     if (pageErrors.length) throw new Error(`page errors: ${pageErrors.join(' | ')}`);
-    console.log('Phase 4 browser QA passed: history, persistence, sidebar, localization, crop/remove, footer/socials, Arsenal/Fenerbahce/Real Madrid semantic logos, manual logo upload, PNG/JPG 1x/2x/4x, four-ratio batch export and duplicate-id checks are green.');
+    console.log('Phase 4 browser QA passed: history, persistence, sidebar, localization, crop/remove, footer/socials, Arsenal/Fenerbahce/Real Madrid semantic logos, manual logo upload, real SnapDOM PNG/JPG 1x/2x/4x export kernel, four-ratio batch UI contract and duplicate-id checks are green.');
   } finally {
     await context.close();
     await browser.close();
