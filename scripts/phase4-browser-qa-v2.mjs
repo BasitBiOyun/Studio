@@ -237,7 +237,6 @@ async function testExportUiContract(page) {
     if (!(await page.getByRole('button', { name: label }).count())) throw new Error(`missing export scale ${label}`);
   }
   if (!(await page.getByRole('button', { name: 'Export All 4 Ratios', exact: true }).count())) throw new Error('missing four-ratio batch export action');
-  await page.getByRole('button', { name: 'Change export settings', exact: true }).click();
 }
 
 async function main() {
