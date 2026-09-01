@@ -1,4 +1,5 @@
 import { PlayerInfo } from '../types';
+import { fitTextFontSize } from './smartTextFit';
 
 export const MAX_TRANSFER_CONDITIONS = 3;
 
@@ -21,23 +22,24 @@ export function formatTransferPlayerMeta(player?: PlayerInfo | null): string {
 }
 
 export function transferHeadlineFontSize(headline: string, isWide: boolean): string {
-  const length = headline.trim().length;
-
-  if (isWide) {
-    if (length <= 10) return '96px';
-    if (length <= 16) return '82px';
-    if (length <= 22) return '68px';
-    return '56px';
-  }
-
-  if (length <= 10) return '120px';
-  if (length <= 16) return '104px';
-  if (length <= 22) return '88px';
-  return '72px';
+  return fitTextFontSize({
+    text: headline,
+    preferredPx: isWide ? 96 : 120,
+    minPx: isWide ? 56 : 72,
+    maxLines: 2,
+    charsPerLineAtPreferred: isWide ? 7 : 7,
+    lineHeight: 0.88,
+    containerHeightPx: isWide ? 175 : 220,
+  });
 }
 
 export function transferPlayerLineFontSize(playerName: string, clubName: string, isWide: boolean): string {
-  const length = `${playerName} ${clubName}`.trim().length;
-  if (isWide) return length > 34 ? '34px' : '40px';
-  return length > 34 ? '40px' : '48px';
+  return fitTextFontSize({
+    text: `${playerName} ➔ ${clubName}`.trim(),
+    preferredPx: isWide ? 40 : 48,
+    minPx: isWide ? 34 : 40,
+    maxLines: 1,
+    charsPerLineAtPreferred: 34,
+    lineHeight: 1,
+  });
 }
