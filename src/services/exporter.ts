@@ -104,6 +104,19 @@ function getFormatConfig(
   return { extension: 'png', mimeType: 'image/png', formatName: 'png', transparent: false };
 }
 
+function downloadBlob(blob: Blob, filename: string): void {
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.rel = 'noopener';
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
 export async function exportGraphic(
   node: HTMLElement,
   options: ExportOptions
@@ -152,12 +165,13 @@ export async function exportGraphic(
     const filename = options.filename || `Graphic_${targetWidth}x${targetHeight}.${formatConfig.extension}`;
     
     onProgress?.('Downloading...');
-    
-    await result.download({
+
+    const blob = await result.blob({
       format: formatConfig.formatName as 'png' | 'jpeg' | 'webp',
-      filename,
       quality: formatConfig.quality
     });
+    if (!blob) throw new Error('Could not generate image blob');
+    downloadBlob(blob, filename);
 
     onProgress?.('Done!');
   } catch (error) {
