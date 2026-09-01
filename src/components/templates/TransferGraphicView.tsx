@@ -8,6 +8,7 @@ import {
   transferPlayerLineFontSize,
   visibleTransferConditions,
 } from '../../services/transfer';
+import { usableLogoSrc } from '../../services/templateVisualPolicy';
 
 interface TemplateProps {
   project: Project;
@@ -16,7 +17,7 @@ interface TemplateProps {
 export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['transfer-graphic'];
   const { credits } = project.sharedData;
-  const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
+  const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
   const { transferData } = templateContent;
   const data = transferData || {
     player: project.sharedData?.player,
@@ -39,6 +40,52 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
   const hasFinancials = hasFee || hasContract;
   const hasClubFlow = Boolean(data.fromClub?.trim() || data.toClub?.trim());
   const hasDetails = Boolean(data.detailsSummary?.trim() || conditions.length);
+  const fromClubLogo = visuals.logos?.[0];
+  const toClubLogo = visuals.logos?.[1];
+  const fromClubLogoSrc = fromClubLogo?.visible ? usableLogoSrc(fromClubLogo.src) : '';
+  const toClubLogoSrc = toClubLogo?.visible ? usableLogoSrc(toClubLogo.src) : '';
+
+  const renderClubIdentity = (
+    side: 'from-club' | 'to-club',
+    label: string,
+    clubName: string,
+    logoSrc: string,
+    logoName?: string,
+    logoOpacity = 100,
+  ) => {
+    const isDestination = side === 'to-club';
+
+    return (
+      <div
+        className={`min-w-0 flex-1 flex flex-col ${isDestination ? 'items-end text-right' : 'items-start text-left'}`}
+        data-semantic-logo-slot={side}
+      >
+        {logoSrc && (
+          <div className={`${isWide ? 'w-[82px] h-[82px]' : 'w-[108px] h-[108px]'} mb-2 flex items-center justify-center`}>
+            <img
+              src={logoSrc}
+              alt={logoName || `${clubName} logo`}
+              className="max-w-full max-h-full object-contain drop-shadow-2xl"
+              style={{ opacity: logoOpacity / 100 }}
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
+        <div className="text-[11px] font-black uppercase tracking-widest text-neutral-400">
+          {label}
+        </div>
+        <div
+          className={`${isWide ? 'text-[23px]' : 'text-[28px]'} font-black uppercase tracking-tight leading-tight break-words max-w-full`}
+          style={{
+            fontFamily: fontDisplay,
+            color: isDestination ? theme.primaryAccent : '#ffffff',
+          }}
+        >
+          {clubName || '—'}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : 'p-14 md:p-16'} select-none`}>
@@ -88,7 +135,7 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
       <div className={`flex-1 grid grid-cols-12 ${isWide ? 'gap-5 my-4' : 'gap-8 my-6'} items-center`}>
         {/* Left Data Column */}
         <div className={`col-span-8 flex flex-col ${isWide ? 'gap-4' : 'gap-6'} max-w-[1300px]`}>
-          {/* Club Transition Flow */}
+          {/* Club Transition Flow. Logo slots 0/1 are semantic from/to identities, never interchangeable. */}
           {hasClubFlow && (
             <div
               className={`rounded-2xl ${isWide ? 'p-4' : 'p-6'} border backdrop-blur-md flex items-center justify-between shadow-2xl`}
@@ -97,17 +144,14 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
                 borderColor: `${theme.primaryAccent}40`,
               }}
             >
-              <div className="text-left min-w-0 flex-1">
-                <div className="text-[12px] font-black uppercase tracking-widest text-neutral-400">
-                  Departing Club
-                </div>
-                <div
-                  className={`${isWide ? 'text-[32px]' : 'text-[40px]'} font-black uppercase tracking-tight text-white leading-tight break-words`}
-                  style={{ fontFamily: fontDisplay }}
-                >
-                  {data.fromClub || '—'}
-                </div>
-              </div>
+              {renderClubIdentity(
+                'from-club',
+                'Departing Club',
+                data.fromClub,
+                fromClubLogoSrc,
+                fromClubLogo?.name,
+                fromClubLogo?.opacity,
+              )}
 
               <div
                 className={`${isWide ? 'w-12 h-12' : 'w-14 h-14'} mx-5 rounded-2xl flex items-center justify-center border text-white shadow-xl flex-shrink-0`}
@@ -120,20 +164,14 @@ export const TransferGraphicView: React.FC<TemplateProps> = ({ project }) => {
                 <IconArrowRight size={isWide ? 27 : 32} />
               </div>
 
-              <div className="text-right min-w-0 flex-1">
-                <div className="text-[12px] font-black uppercase tracking-widest text-neutral-400">
-                  New Club
-                </div>
-                <div
-                  className={`${isWide ? 'text-[32px]' : 'text-[40px]'} font-black uppercase tracking-tight leading-tight break-words`}
-                  style={{
-                    fontFamily: fontDisplay,
-                    color: theme.primaryAccent,
-                  }}
-                >
-                  {data.toClub || '—'}
-                </div>
-              </div>
+              {renderClubIdentity(
+                'to-club',
+                'New Club',
+                data.toClub,
+                toClubLogoSrc,
+                toClubLogo?.name,
+                toClubLogo?.opacity,
+              )}
             </div>
           )}
 

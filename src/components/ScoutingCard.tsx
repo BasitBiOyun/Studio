@@ -58,9 +58,10 @@ export const ScoutingCard = React.forwardRef<HTMLDivElement, ScoutingCardProps>(
     const backgroundLogo = visualPolicy.backgroundLogoIndex === undefined
       ? null
       : effectiveLogos[visualPolicy.backgroundLogoIndex] || null;
-    const foregroundLogos = visualPolicy.backgroundLogoIndex === undefined
-      ? effectiveLogos
-      : effectiveLogos.filter((_, index) => index !== visualPolicy.backgroundLogoIndex);
+    const semanticLogoIndexes = templateType === 'transfer-graphic' ? new Set([0, 1]) : new Set<number>();
+    const foregroundLogos = effectiveLogos.filter((_, index) => (
+      index !== visualPolicy.backgroundLogoIndex && !semanticLogoIndexes.has(index)
+    ));
 
     const outputLanguage = useOutputLanguage();
     const localizedContentRef = useRef<HTMLDivElement>(null);
