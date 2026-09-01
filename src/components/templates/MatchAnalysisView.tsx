@@ -10,6 +10,7 @@ import {
   visibleMatchAnalysisStats,
   visibleMatchAnalysisTakeaways,
 } from '../../services/matchAnalysis';
+import { usableLogoSrc } from '../../services/templateVisualPolicy';
 
 interface TemplateProps {
   project: Project;
@@ -18,7 +19,7 @@ interface TemplateProps {
 export const MatchAnalysisView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['match-analysis'];
   const { credits } = project.sharedData;
-  const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
+  const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
   const { matchAnalysisData } = templateContent;
   const data = matchAnalysisData || {
     competition: 'PREMIER LEAGUE',
@@ -45,6 +46,11 @@ export const MatchAnalysisView: React.FC<TemplateProps> = ({ project }) => {
   const hasScorers = scorersTeam1.length > 0 || scorersTeam2.length > 0;
   const hasPerformer = Boolean(data.performerName?.trim());
   const team2Accent = theme.secondaryAccent || '#64748b';
+  const team1Logo = visuals.logos?.[0];
+  const team2Logo = visuals.logos?.[1];
+  const team1LogoSrc = team1Logo?.visible ? usableLogoSrc(team1Logo.src) : '';
+  const team2LogoSrc = team2Logo?.visible ? usableLogoSrc(team2Logo.src) : '';
+  const matchupFontSize = matchAnalysisScoreFontSize(data.scoreline.team1, data.scoreline.team2, isWide);
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : 'p-14 md:p-16'} select-none`}>
@@ -58,14 +64,45 @@ export const MatchAnalysisView: React.FC<TemplateProps> = ({ project }) => {
           </span>
         </div>
 
-        <h1
-          className="font-black uppercase tracking-tight text-white leading-[0.92] break-words"
-          style={{ fontFamily: fontDisplay, fontSize: matchAnalysisScoreFontSize(data.scoreline.team1, data.scoreline.team2, isWide) }}
-        >
-          {data.scoreline.team1}{' '}
-          <span style={{ color: theme.primaryAccent }}>{data.scoreline.score1}–{data.scoreline.score2}</span>{' '}
-          {data.scoreline.team2}
-        </h1>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 w-full">
+          <div className="min-w-0 flex items-center gap-3" data-semantic-logo-slot="home-team">
+            {team1LogoSrc && (
+              <div className={`${isWide ? 'w-[70px] h-[70px]' : 'w-[92px] h-[92px]'} flex-shrink-0 flex items-center justify-center`}>
+                <img
+                  src={team1LogoSrc}
+                  alt={team1Logo?.name || `${data.scoreline.team1} logo`}
+                  className="max-w-full max-h-full object-contain drop-shadow-xl"
+                  style={{ opacity: (team1Logo?.opacity ?? 100) / 100 }}
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            )}
+            <div className="font-black uppercase tracking-tight text-white leading-[0.92] break-words min-w-0" style={{ fontFamily: fontDisplay, fontSize: matchupFontSize }}>
+              {data.scoreline.team1}
+            </div>
+          </div>
+
+          <div className="font-black tabular-nums leading-none tracking-tight px-2 text-center" style={{ fontFamily: fontDisplay, fontSize: matchupFontSize, color: theme.primaryAccent }}>
+            {data.scoreline.score1}–{data.scoreline.score2}
+          </div>
+
+          <div className="min-w-0 flex items-center justify-end gap-3 text-right" data-semantic-logo-slot="away-team">
+            <div className="font-black uppercase tracking-tight text-white leading-[0.92] break-words min-w-0" style={{ fontFamily: fontDisplay, fontSize: matchupFontSize }}>
+              {data.scoreline.team2}
+            </div>
+            {team2LogoSrc && (
+              <div className={`${isWide ? 'w-[70px] h-[70px]' : 'w-[92px] h-[92px]'} flex-shrink-0 flex items-center justify-center`}>
+                <img
+                  src={team2LogoSrc}
+                  alt={team2Logo?.name || `${data.scoreline.team2} logo`}
+                  className="max-w-full max-h-full object-contain drop-shadow-xl"
+                  style={{ opacity: (team2Logo?.opacity ?? 100) / 100 }}
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            )}
+          </div>
+        </div>
 
         {hasScorers && (
           <div className={`grid grid-cols-2 ${isWide ? 'gap-6 mt-1' : 'gap-10 mt-2'} w-full text-neutral-300 font-semibold`}>

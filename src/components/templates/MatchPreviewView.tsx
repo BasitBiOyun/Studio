@@ -10,6 +10,7 @@ import {
   visibleMatchForm,
   visibleTacticalKeys,
 } from '../../services/matchPreview';
+import { usableLogoSrc } from '../../services/templateVisualPolicy';
 
 interface TemplateProps {
   project: Project;
@@ -25,7 +26,7 @@ function formResultClass(result: string) {
 export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
   const activeTemplate = project.templates[project.templateType] || project.templates['match-preview'];
   const { credits } = project.sharedData;
-  const { theme, layout: advancedLayout, content: templateContent } = activeTemplate;
+  const { theme, layout: advancedLayout, content: templateContent, visuals } = activeTemplate;
   const { matchPreviewData } = templateContent;
   const data = matchPreviewData || {
     competition: 'UEFA CHAMPIONS LEAGUE',
@@ -46,6 +47,10 @@ export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
   const timing = resolveMatchTiming(data.kickoffTime, (data as any).venue);
   const hasBattle = Boolean(data.keyBattleTitle?.trim() || data.keyBattleDetails?.trim());
   const player2Accent = theme.secondaryAccent || '#64748b';
+  const team1Logo = visuals.logos?.[0];
+  const team2Logo = visuals.logos?.[1];
+  const team1LogoSrc = team1Logo?.visible ? usableLogoSrc(team1Logo.src) : '';
+  const team2LogoSrc = team2Logo?.visible ? usableLogoSrc(team2Logo.src) : '';
 
   return (
     <div className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : 'p-14 md:p-16'} select-none`}>
@@ -100,11 +105,14 @@ export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
 
       {/* Main Content Area */}
       <div className={`flex-1 ${isWide ? 'my-3 gap-3' : 'my-6 gap-6'} flex flex-col justify-center max-w-[1900px]`}>
-        {/* Team snapshots: identity, optional standing/manager and recent form only. */}
+        {/* Team snapshots: semantic logo slots 0/1 stay attached to home/away identities. */}
         <div className={`grid grid-cols-2 ${isWide ? 'gap-4' : 'gap-8'}`}>
           {[data.team1, data.team2].map((team, teamIndex) => {
             const form = teamIndex === 0 ? team1Form : team2Form;
             const accent = teamIndex === 0 ? theme.primaryAccent : player2Accent;
+            const logo = teamIndex === 0 ? team1Logo : team2Logo;
+            const logoSrc = teamIndex === 0 ? team1LogoSrc : team2LogoSrc;
+            const semanticSlot = teamIndex === 0 ? 'home-team' : 'away-team';
             return (
               <div
                 key={`${team.name}-${teamIndex}`}
@@ -113,6 +121,7 @@ export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
                   backgroundColor: 'rgba(10, 14, 26, 0.85)',
                   borderColor: `${accent}40`,
                 }}
+                data-semantic-logo-slot={semanticSlot}
               >
                 {(team.standing?.trim() || form.length > 0) && (
                   <div className="flex items-center justify-between gap-3 mb-2 min-h-7">
@@ -134,21 +143,43 @@ export const MatchPreviewView: React.FC<TemplateProps> = ({ project }) => {
                   </div>
                 )}
 
-                <div
-                  className="font-black uppercase tracking-tight text-white leading-tight break-words"
-                  style={{
-                    fontFamily: fontDisplay,
-                    fontSize: matchPreviewTeamFontSize(team.name, isWide),
-                  }}
-                >
-                  {team.name}
-                </div>
+                <div className={`flex items-center ${teamIndex === 1 ? 'justify-end text-right' : ''} ${isWide ? 'gap-3' : 'gap-4'} min-w-0`}>
+                  {teamIndex === 1 && (
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="font-black uppercase tracking-tight text-white leading-tight break-words"
+                        style={{ fontFamily: fontDisplay, fontSize: matchPreviewTeamFontSize(team.name, isWide) }}
+                      >
+                        {team.name}
+                      </div>
+                      {team.manager?.trim() && <div className="text-[16px] font-bold text-neutral-300 uppercase mt-1">Manager: {team.manager}</div>}
+                    </div>
+                  )}
 
-                {team.manager?.trim() && (
-                  <div className="text-[16px] font-bold text-neutral-300 uppercase mt-1">
-                    Manager: {team.manager}
-                  </div>
-                )}
+                  {logoSrc && (
+                    <div className={`${isWide ? 'w-[76px] h-[76px]' : 'w-[96px] h-[96px]'} flex-shrink-0 flex items-center justify-center`}>
+                      <img
+                        src={logoSrc}
+                        alt={logo?.name || `${team.name} logo`}
+                        className="max-w-full max-h-full object-contain drop-shadow-xl"
+                        style={{ opacity: (logo?.opacity ?? 100) / 100 }}
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
+
+                  {teamIndex === 0 && (
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="font-black uppercase tracking-tight text-white leading-tight break-words"
+                        style={{ fontFamily: fontDisplay, fontSize: matchPreviewTeamFontSize(team.name, isWide) }}
+                      >
+                        {team.name}
+                      </div>
+                      {team.manager?.trim() && <div className="text-[16px] font-bold text-neutral-300 uppercase mt-1">Manager: {team.manager}</div>}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
