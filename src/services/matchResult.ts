@@ -1,3 +1,5 @@
+import { fitTextFontSize } from './smartTextFit';
+
 export const MAX_MATCH_RESULT_STATS = 4;
 export const MAX_MATCH_RESULT_SCORERS = 4;
 
@@ -28,31 +30,24 @@ export function visibleMatchResultStats<T extends { label?: string; val1?: strin
 }
 
 export function matchResultScoreFontSize(team1: string, team2: string, isWide = false): string {
-  const longest = Math.max(String(team1 || '').trim().length, String(team2 || '').trim().length);
-  const combined = String(team1 || '').trim().length + String(team2 || '').trim().length;
-
-  if (isWide) {
-    if (longest <= 14 && combined <= 24) return '74px';
-    if (longest <= 20 && combined <= 34) return '64px';
-    if (longest <= 28 && combined <= 46) return '54px';
-    return '46px';
-  }
-
-  if (longest <= 14 && combined <= 24) return '100px';
-  if (longest <= 20 && combined <= 34) return '86px';
-  if (longest <= 28 && combined <= 46) return '72px';
-  return '60px';
+  return fitTextFontSize({
+    text: `${team1 || ''} 0-0 ${team2 || ''}`.trim(),
+    preferredPx: isWide ? 74 : 100,
+    minPx: isWide ? 46 : 60,
+    maxLines: 2,
+    charsPerLineAtPreferred: 12,
+    lineHeight: 0.92,
+    containerHeightPx: isWide ? 150 : 195,
+  });
 }
 
 export function matchResultMvpNameFontSize(name: string, isWide = false): string {
-  const length = String(name || '').trim().length;
-  if (isWide) {
-    if (length <= 18) return '28px';
-    if (length <= 28) return '24px';
-    return '21px';
-  }
-
-  if (length <= 18) return '32px';
-  if (length <= 28) return '28px';
-  return '24px';
+  return fitTextFontSize({
+    text: name,
+    preferredPx: isWide ? 28 : 32,
+    minPx: isWide ? 21 : 24,
+    maxLines: 1,
+    charsPerLineAtPreferred: 18,
+    lineHeight: 1,
+  });
 }
