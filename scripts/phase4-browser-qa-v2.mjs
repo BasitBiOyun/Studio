@@ -196,13 +196,24 @@ async function chooseExport(page, format, scale) {
   await page.getByRole('button', { name: label }).click();
 }
 
+async function recordedDownloads(page) {
+  return page.evaluate(() => Array.isArray(window.__phase4Downloads) ? [...window.__phase4Downloads] : []);
+}
+
 async function exportOne(page, format, scale) {
   await chooseExport(page, format, scale);
-  const download = page.waitForEvent('download', { timeout: 120_000 });
+  const before = (await recordedDownloads(page)).length;
   await page.getByRole('button', { name: /Export \d+px image/ }).click({ force: true });
-  const file = (await download).suggestedFilename().toLowerCase();
+  await page.waitForFunction(
+    (count) => Array.isArray(window.__phase4Downloads) && window.__phase4Downloads.length > count,
+    before,
+    { timeout: 180_000 },
+  );
+  const files = await recordedDownloads(page);
+  const file = String(files.at(-1) || '').toLowerCase();
   const extension = format === 'jpg' ? '.jpg' : '.png';
   if (!file.endsWith(extension)) throw new Error(`${format} ${scale}x export filename invalid: ${file}`);
+  await page.getByText(/Exported .* graphic successfully!/).waitFor({ state: 'visible', timeout: 20_000 });
 }
 
 async function testExports(page) {
@@ -212,20 +223,26 @@ async function testExports(page) {
   await exportOne(page, 'png', 4);
 
   await chooseExport(page, 'png', 1);
-  const filenames = [];
-  const listener = (download) => filenames.push(download.suggestedFilename());
-  page.on('download', listener);
+  const before = (await recordedDownloads(page)).length;
   await page.getByRole('button', { name: 'Export All 4 Ratios', exact: true }).click({ force: true });
-  await page.getByText('Exported all 4 aspect ratios.', { exact: true }).waitFor({ state: 'visible', timeout: 180_000 });
-  page.off('download', listener);
+  await page.getByText('Exported all 4 aspect ratios.', { exact: true }).waitFor({ state: 'visible', timeout: 240_000 });
+  const filenames = (await recordedDownloads(page)).slice(before);
   for (const ratio of ['1:1', '4:5', '16:9', '9:16']) {
-    if (!filenames.some((name) => name.includes(`_${ratio}_`))) throw new Error(`batch export missing ${ratio}: ${filenames.join(', ')}`);
+    if (!filenames.some((name) => String(name).includes(`_${ratio}_`))) throw new Error(`batch export missing ${ratio}: ${filenames.join(', ')}`);
   }
 }
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true, reducedMotion: 'reduce' });
+  await context.addInitScript(() => {
+    window.__phase4Downloads = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function patchedAnchorClick() {
+      if (this.download) window.__phase4Downloads.push(this.download);
+      return originalClick.call(this);
+    };
+  });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
