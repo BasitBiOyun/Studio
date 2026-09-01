@@ -1,12 +1,12 @@
 {
   "schemaVersion": "uefa-club-catalogue-v1",
-  "generatedAt": "2026-08-30T20:43:17.302Z",
+  "generatedAt": "2026-09-01T09:26:13.618Z",
   "target": "UEFA men domestic top divisions",
   "uefaMemberAssociations": 55,
   "domesticLeagueAssociationsExpected": 54,
   "liechtensteinNote": "Liechtenstein has no domestic league; its clubs play in the Swiss league system.",
-  "totalEntries": 616,
-  "topDivisionEntries": 515,
+  "totalEntries": 617,
+  "topDivisionEntries": 516,
   "representedAssociations": 54,
   "topDivisionAssociations": 46,
   "fallbackAssociations": [

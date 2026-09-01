@@ -1414,6 +1414,20 @@
     "topDivisionSource": "wikidata-current-league"
   },
   {
+    "id": "Q131378",
+    "name": "APOEL F.C.",
+    "country": "Cyprus",
+    "league": "Cypriot First Division",
+    "leagueId": "Q155965",
+    "wikidataId": "Q131378",
+    "fallbackLogoUrl": null,
+    "wikidataLogoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/APOEL%20%28logo%20with%20stars%29.svg",
+    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/APOEL%20%28logo%20with%20stars%29.svg",
+    "logoSource": "wikidata-p154",
+    "scope": "top-division",
+    "topDivisionSource": "wikidata-current-league"
+  },
+  {
     "id": "Q428047",
     "name": "Apollon Limassol FC",
     "country": "Cyprus",
