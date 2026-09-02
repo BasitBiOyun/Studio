@@ -2,6 +2,7 @@ import { ProjectSchema } from './schema';
 import { Project, BrandSettings, DesignReferenceItem, TemplateType } from '../types';
 import { DEFAULT_PROJECT, DEFAULT_BRAND_SETTINGS, INITIAL_DESIGN_REFERENCES } from '../constants/presets';
 import { db, ProjectVersionRecord } from './db';
+import { prepareProjectForMigration, stampCurrentTemplateVersions } from './templateVersioning';
 
 const STORAGE_KEY_CURRENT = 'bbo_current_project';
 const STORAGE_KEY_LIST = 'bbo_projects_library';
@@ -37,10 +38,11 @@ function deepMerge<T>(base: T, incoming: unknown): T {
 }
 
 export function migrateProject(input: any): Project {
-  if (!input || typeof input !== 'object') return clone(DEFAULT_PROJECT);
+  if (!input || typeof input !== 'object') return stampCurrentTemplateVersions(clone(DEFAULT_PROJECT));
 
-  const migrated = deepMerge(DEFAULT_PROJECT, input);
-  const requestedTemplate = input.templateType as TemplateType | undefined;
+  const prepared = prepareProjectForMigration(input);
+  const migrated = deepMerge(DEFAULT_PROJECT, prepared);
+  const requestedTemplate = prepared.templateType as TemplateType | undefined;
   migrated.templateType = requestedTemplate && TEMPLATE_TYPES.includes(requestedTemplate)
     ? requestedTemplate
     : 'scouting-report';
@@ -49,12 +51,12 @@ export function migrateProject(input: any): Project {
     migrated.templateType = 'scouting-report';
   }
 
-  migrated.id = String(input.id || migrated.id || `project-${Date.now()}`);
-  migrated.name = String(input.name || migrated.name || 'Untitled Graphic');
-  migrated.createdAt = Number(input.createdAt) || migrated.createdAt || Date.now();
-  migrated.updatedAt = Number(input.updatedAt) || migrated.updatedAt || Date.now();
+  migrated.id = String(prepared.id || migrated.id || `project-${Date.now()}`);
+  migrated.name = String(prepared.name || migrated.name || 'Untitled Graphic');
+  migrated.createdAt = Number(prepared.createdAt) || migrated.createdAt || Date.now();
+  migrated.updatedAt = Number(prepared.updatedAt) || migrated.updatedAt || Date.now();
 
-  return migrated;
+  return stampCurrentTemplateVersions(migrated);
 }
 
 function projectFingerprint(project: Project): string {
@@ -169,7 +171,7 @@ export async function loadCurrentProject(): Promise<Project> {
   const projects = await db.projects.orderBy('updatedAt').reverse().toArray();
   if (projects.length > 0) return migrateProject(projects[0]);
 
-  return clone(DEFAULT_PROJECT);
+  return migrateProject(clone(DEFAULT_PROJECT));
 }
 
 export async function saveCurrentProject(project: Project): Promise<void> {
@@ -228,7 +230,7 @@ export async function loadProjectsList(): Promise<Project[]> {
   await ensureMigrated();
   const projects = await db.projects.orderBy('updatedAt').reverse().toArray();
   if (projects.length === 0) {
-    const initial = clone(DEFAULT_PROJECT);
+    const initial = migrateProject(clone(DEFAULT_PROJECT));
     await db.projects.put(initial);
     return [initial];
   }
@@ -279,9 +281,10 @@ export async function createNewProjectFromBrand(
     updatedAt: Date.now(),
   };
 
-  await db.projects.put(newProject);
-  await saveCurrentProject(newProject);
-  return clone(newProject);
+  const versionedProject = migrateProject(newProject);
+  await db.projects.put(versionedProject);
+  await saveCurrentProject(versionedProject);
+  return clone(versionedProject);
 }
 
 export async function duplicateProjectInList(id: string): Promise<Project | null> {
