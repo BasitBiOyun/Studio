@@ -38,7 +38,7 @@ assert.deepEqual(
 );
 assert.deepEqual(
   getTemplateVariants('player-comparison').map((item) => item.label),
-  ['Split', 'Table / Data'],
+  ['Split', 'Table / Data', 'Radar', 'Metric Bars', 'Percentiles'],
   'Player Comparison variants are incomplete.',
 );
 
@@ -137,5 +137,10 @@ for (const file of [
   assert.match(source, /data-template-variant=/, `${file} does not expose its active composition for QA.`);
 }
 
+const comparisonSource = fs.readFileSync('src/components/templates/PlayerComparisonView.tsx', 'utf8');
+assert.match(comparisonSource, /ComparisonChart/, 'Player Comparison chart variants are not wired to the Studio chart layer.');
+assert.ok(TEMPLATE_VARIANTS['player-comparison']?.some((item) => item.id === 'comparison-radar'), 'Radar comparison variant is missing.');
+assert.ok(TEMPLATE_VARIANTS['player-comparison']?.some((item) => item.id === 'comparison-bars'), 'Metric Bars comparison variant is missing.');
+assert.ok(TEMPLATE_VARIANTS['player-comparison']?.some((item) => item.id === 'comparison-percentile'), 'Percentile comparison variant is missing.');
 assert.ok(TEMPLATE_VARIANTS['transfer-graphic']?.every((item) => item.visualMode), 'Variants must expose controlled visual modes.');
 console.log('Phase 9 template variants self-test passed.');
