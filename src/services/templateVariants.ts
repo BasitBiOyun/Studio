@@ -10,7 +10,10 @@ export type TemplateVariantId =
   | 'scouting-editorial'
   | 'scouting-data'
   | 'comparison-split'
-  | 'comparison-table';
+  | 'comparison-table'
+  | 'comparison-radar'
+  | 'comparison-bars'
+  | 'comparison-percentile';
 
 export interface TemplateVariantOption {
   id: TemplateVariantId;
@@ -39,6 +42,9 @@ export const TEMPLATE_VARIANTS: Partial<Record<TemplateType, TemplateVariantOpti
   'player-comparison': [
     { id: 'comparison-split', label: 'Split', labelTr: 'Bölünmüş', description: 'Player-versus-player split composition.', descriptionTr: 'İki oyuncuyu karşı karşıya gösteren bölünmüş kompozisyon.', visualMode: 'editorial' },
     { id: 'comparison-table', label: 'Table / Data', labelTr: 'Tablo / Veri', description: 'Table-led comparison with metrics as the primary hierarchy.', descriptionTr: 'İstatistikleri ana hiyerarşi yapan tablo odaklı karşılaştırma.', visualMode: 'data' },
+    { id: 'comparison-radar', label: 'Radar', labelTr: 'Radar', description: 'Direction-adjusted pair-relative radar for profile shape.', descriptionTr: 'Profil şeklini gösteren yön ayarlı, iki oyuncuya göre normalize edilmiş radar.', visualMode: 'data' },
+    { id: 'comparison-bars', label: 'Metric Bars', labelTr: 'Metrik Barları', description: 'Raw-value comparison with within-metric visual scaling.', descriptionTr: 'Ham değerleri koruyan ve her metriği kendi içinde ölçekleyen karşılaştırma.', visualMode: 'data' },
+    { id: 'comparison-percentile', label: 'Percentiles', labelTr: 'Yüzdelikler', description: 'League percentile profile when percentile data is supplied.', descriptionTr: 'Yüzdelik verileri sağlandığında lig yüzdelik profilini gösterir.', visualMode: 'data' },
   ],
 };
 
