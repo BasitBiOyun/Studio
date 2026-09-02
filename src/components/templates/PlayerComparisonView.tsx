@@ -8,6 +8,7 @@ import { usablePlayerImageSrc } from '../../services/templateVisualPolicy';
 import { scaledTemplateFontSize } from '../../services/templateTypography';
 import { getActiveTemplateVariantId } from '../../services/templateVariants';
 import { getActiveAutoLayoutPresetId } from '../../services/autoLayoutPresets';
+import { ComparisonChart, ComparisonChartMode } from '../charts/ComparisonChart';
 
 interface TemplateProps { project: Project; }
 
@@ -41,6 +42,15 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   const isWide = project.aspectRatio === '16:9' || project.aspectRatio === 'x-landscape';
   const variant = getActiveTemplateVariantId(project) || 'comparison-split';
   const isTable = variant === 'comparison-table';
+  const chartMode: ComparisonChartMode | null = variant === 'comparison-radar'
+    ? 'radar'
+    : variant === 'comparison-bars'
+      ? 'bars'
+      : variant === 'comparison-percentile'
+        ? 'percentile'
+        : null;
+  const isChart = chartMode !== null;
+  const isDataMode = isTable || isChart;
   const autoLayout = getActiveAutoLayoutPresetId(project);
   const hideSubjects = autoLayout === 'no-subject-full-content';
   const importedContext = (templateContent as any).dataProvenance?.context;
@@ -62,11 +72,11 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
   );
 
   return (
-    <div data-template-variant={variant} data-layout-content={hideSubjects ? 'full' : 'split'} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : isTable ? 'p-11 md:p-12' : 'p-14 md:p-16'} select-none`}>
-      <EditorialHeader categoryBadge={isTable ? 'Head-to-Head • Data Table' : 'Head-to-Head • Analytical Comparison'} title={`${data.player1.name} VS ${data.player2.name}`} subtitle={subtitle} theme={theme} fontDisplay={fontDisplay} layout={advancedLayout} visualMode={isTable ? 'data' : 'editorial'} />
+    <div data-template-variant={variant} data-layout-content={hideSubjects ? 'full' : 'split'} className={`relative z-20 w-full h-full flex flex-col justify-between ${isWide ? 'p-8' : isDataMode ? 'p-11 md:p-12' : 'p-14 md:p-16'} select-none`}>
+      <EditorialHeader categoryBadge={isChart ? 'Head-to-Head • Studio Charts' : isTable ? 'Head-to-Head • Data Table' : 'Head-to-Head • Analytical Comparison'} title={`${data.player1.name} VS ${data.player2.name}`} subtitle={subtitle} theme={theme} fontDisplay={fontDisplay} layout={advancedLayout} visualMode={isDataMode ? 'data' : 'editorial'} />
 
-      <div className={`flex-1 ${isWide ? 'my-3 gap-3' : isTable ? 'my-4 gap-4' : 'my-6 gap-6'} flex flex-col justify-center max-w-[2000px] mx-auto w-full`}>
-        {isTable ? (
+      <div className={`flex-1 ${isWide ? 'my-3 gap-3' : isDataMode ? 'my-4 gap-4' : 'my-6 gap-6'} flex flex-col justify-center max-w-[2000px] mx-auto w-full min-h-0`}>
+        {isDataMode ? (
           <div className={`grid grid-cols-2 ${isWide ? 'gap-3' : 'gap-4'}`}>
             {renderCompactPlayer(data.player1, player1Image, theme.primaryAccent, 'left')}
             {renderCompactPlayer(data.player2, player2Image, player2Accent, 'right')}
@@ -95,45 +105,59 @@ export const PlayerComparisonView: React.FC<TemplateProps> = ({ project }) => {
           </div>
         )}
 
-        <div className={`rounded-2xl ${isWide ? 'p-4 gap-2' : isTable ? 'p-4 gap-1.5' : 'p-6 gap-4'} border backdrop-blur-md flex flex-col shadow-2xl`} style={{ backgroundColor: isTable ? 'rgba(5, 9, 18, 0.94)' : 'rgba(10, 14, 26, 0.9)', borderColor: isTable ? `${theme.primaryAccent}25` : 'rgba(255, 255, 255, 0.08)' }}>
-          {isTable && metrics.length > 0 && (
-            <div className="grid grid-cols-12 gap-2 pb-2 border-b border-neutral-700/70 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-500">
-              <div className="col-span-6">Metric</div>
-              <div className="col-span-3 text-center">{data.player1.name}</div>
-              <div className="col-span-3 text-center">{data.player2.name}</div>
-            </div>
-          )}
-          {metrics.map((metric) => {
-            const winner = getMetricWinner(metric);
-            const player1Wins = winner === 'player1';
-            const player2Wins = winner === 'player2';
-            if (isTable) {
+        {isChart && chartMode ? (
+          <div className="flex-1 min-h-[250px] max-h-[520px]">
+            <ComparisonChart
+              mode={chartMode}
+              metrics={metrics}
+              player1Name={data.player1.name}
+              player2Name={data.player2.name}
+              accent1={theme.primaryAccent}
+              accent2={player2Accent}
+              compact={isWide}
+            />
+          </div>
+        ) : (
+          <div className={`rounded-2xl ${isWide ? 'p-4 gap-2' : isTable ? 'p-4 gap-1.5' : 'p-6 gap-4'} border backdrop-blur-md flex flex-col shadow-2xl`} style={{ backgroundColor: isTable ? 'rgba(5, 9, 18, 0.94)' : 'rgba(10, 14, 26, 0.9)', borderColor: isTable ? `${theme.primaryAccent}25` : 'rgba(255, 255, 255, 0.08)' }}>
+            {isTable && metrics.length > 0 && (
+              <div className="grid grid-cols-12 gap-2 pb-2 border-b border-neutral-700/70 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-500">
+                <div className="col-span-6">Metric</div>
+                <div className="col-span-3 text-center">{data.player1.name}</div>
+                <div className="col-span-3 text-center">{data.player2.name}</div>
+              </div>
+            )}
+            {metrics.map((metric) => {
+              const winner = getMetricWinner(metric);
+              const player1Wins = winner === 'player1';
+              const player2Wins = winner === 'player2';
+              if (isTable) {
+                return (
+                  <div key={metric.id} className="grid grid-cols-12 gap-2 py-2 items-center border-b border-neutral-800/70 last:border-0">
+                    <div className="col-span-6 font-bold tracking-wide text-neutral-200" style={{ fontSize: scaledTemplateFontSize(isWide ? 15 : 17, advancedLayout, 'body', 13, 22) }}>{metric.label}</div>
+                    <div className="col-span-3 text-center"><span className="inline-block font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 27 : 31, advancedLayout, 'stat', 21, 40), backgroundColor: player1Wins ? `${theme.primaryAccent}20` : 'transparent', color: player1Wins ? theme.primaryAccent : '#94a3b8' }}>{metric.val1}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
+                    <div className="col-span-3 text-center"><span className="inline-block font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 27 : 31, advancedLayout, 'stat', 21, 40), backgroundColor: player2Wins ? `${player2Accent}30` : 'transparent', color: player2Wins ? player2Accent : '#94a3b8' }}>{metric.val2}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
+                  </div>
+                );
+              }
               return (
-                <div key={metric.id} className="grid grid-cols-12 gap-2 py-2 items-center border-b border-neutral-800/70 last:border-0">
-                  <div className="col-span-6 font-bold tracking-wide text-neutral-200" style={{ fontSize: scaledTemplateFontSize(isWide ? 15 : 17, advancedLayout, 'body', 13, 22) }}>{metric.label}</div>
-                  <div className="col-span-3 text-center"><span className="inline-block font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 27 : 31, advancedLayout, 'stat', 21, 40), backgroundColor: player1Wins ? `${theme.primaryAccent}20` : 'transparent', color: player1Wins ? theme.primaryAccent : '#94a3b8' }}>{metric.val1}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
-                  <div className="col-span-3 text-center"><span className="inline-block font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(isWide ? 27 : 31, advancedLayout, 'stat', 21, 40), backgroundColor: player2Wins ? `${player2Accent}30` : 'transparent', color: player2Wins ? player2Accent : '#94a3b8' }}>{metric.val2}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
+                <div key={metric.id} className={`grid grid-cols-12 ${isWide ? 'gap-2 py-1.5' : 'gap-4 py-2.5'} items-center border-b border-neutral-800/60 last:border-0`}>
+                  <div className="col-span-3 text-left"><span className="font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(32, advancedLayout, 'stat', 22, 42), backgroundColor: player1Wins ? `${theme.primaryAccent}20` : 'transparent', color: player1Wins ? theme.primaryAccent : '#94a3b8' }}>{metric.val1}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
+                  <div className="col-span-6 text-center"><div className="font-bold tracking-wide text-neutral-200" style={{ fontSize: scaledTemplateFontSize(20, advancedLayout, 'body', 14, 26) }}>{metric.label}</div></div>
+                  <div className="col-span-3 text-right"><span className="font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(32, advancedLayout, 'stat', 22, 42), backgroundColor: player2Wins ? `${player2Accent}30` : 'transparent', color: player2Wins ? player2Accent : '#94a3b8' }}>{metric.val2}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
                 </div>
               );
-            }
-            return (
-              <div key={metric.id} className={`grid grid-cols-12 ${isWide ? 'gap-2 py-1.5' : 'gap-4 py-2.5'} items-center border-b border-neutral-800/60 last:border-0`}>
-                <div className="col-span-3 text-left"><span className="font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(32, advancedLayout, 'stat', 22, 42), backgroundColor: player1Wins ? `${theme.primaryAccent}20` : 'transparent', color: player1Wins ? theme.primaryAccent : '#94a3b8' }}>{metric.val1}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
-                <div className="col-span-6 text-center"><div className="font-bold tracking-wide text-neutral-200" style={{ fontSize: scaledTemplateFontSize(20, advancedLayout, 'body', 14, 26) }}>{metric.label}</div></div>
-                <div className="col-span-3 text-right"><span className="font-black tracking-tight tabular-nums px-3 py-1 rounded-lg" style={{ fontFamily: fontDisplay, fontSize: scaledTemplateFontSize(32, advancedLayout, 'stat', 22, 42), backgroundColor: player2Wins ? `${player2Accent}30` : 'transparent', color: player2Wins ? player2Accent : '#94a3b8' }}>{metric.val2}{metric.unit ? <span className="text-[0.45em] ml-1 opacity-80">{metric.unit}</span> : null}</span></div>
-              </div>
-            );
-          })}
-        </div>
+            })}
+          </div>
+        )}
 
         {data.verdictText && (
-          <div className={`rounded-2xl ${isTable ? 'p-4' : 'p-5'} border backdrop-blur-md flex items-start gap-4 shadow-xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.85)', borderColor: `${theme.primaryAccent}30` }}>
-            <div className="p-2 rounded-xl border flex-shrink-0" style={{ backgroundColor: `${theme.primaryAccent}15`, borderColor: `${theme.primaryAccent}35`, color: theme.primaryAccent }}><IconScale size={24} /></div>
-            <div><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: theme.primaryAccent }}>{data.verdictTitle || 'ANALYTICAL VERDICT'}</div><p className="text-white font-medium leading-relaxed" style={{ fontSize: scaledTemplateFontSize(isTable ? 17 : 19, advancedLayout, 'verdict', 14, 26) }}>{data.verdictText}</p></div>
+          <div className={`rounded-2xl ${isChart ? 'p-3' : isTable ? 'p-4' : 'p-5'} border backdrop-blur-md flex items-start gap-4 shadow-xl`} style={{ backgroundColor: 'rgba(10, 14, 26, 0.85)', borderColor: `${theme.primaryAccent}30` }}>
+            <div className="p-2 rounded-xl border flex-shrink-0" style={{ backgroundColor: `${theme.primaryAccent}15`, borderColor: `${theme.primaryAccent}35`, color: theme.primaryAccent }}><IconScale size={isChart ? 20 : 24} /></div>
+            <div><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: theme.primaryAccent }}>{data.verdictTitle || 'ANALYTICAL VERDICT'}</div><p className="text-white font-medium leading-relaxed" style={{ fontSize: scaledTemplateFontSize(isChart ? 15 : isTable ? 17 : 19, advancedLayout, 'verdict', 13, 26) }}>{data.verdictText}</p></div>
           </div>
         )}
       </div>
-      <EditorialFooter credits={credits} theme={theme} visualMode={isTable ? 'data' : 'editorial'} />
+      <EditorialFooter credits={credits} theme={theme} visualMode={isDataMode ? 'data' : 'editorial'} />
     </div>
   );
 };
