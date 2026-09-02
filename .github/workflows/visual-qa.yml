@@ -15,6 +15,7 @@ on:
       - 'scripts/phase11-browser-qa.mjs'
       - 'scripts/phase12-browser-qa.mjs'
       - 'scripts/phase13-browser-qa.mjs'
+      - 'scripts/phase14-browser-qa.mjs'
       - 'docs/STUDIO_ROADMAP_STATUS.json'
       - '.github/workflows/visual-qa.yml'
       - 'package.json'
@@ -86,6 +87,9 @@ jobs:
 
       - name: Run Phase 13 social safe-zone browser QA
         run: node scripts/phase13-browser-qa.mjs
+
+      - name: Run Phase 14 template versioning & recovery browser QA
+        run: node scripts/phase14-browser-qa.mjs
 
       - name: Upload visual QA screenshots
         if: always()
