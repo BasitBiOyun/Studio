@@ -176,6 +176,8 @@ export interface ComparisonMetric {
   val2: string;
   unit?: string;
   higherIsBetter?: boolean;
+  percentile1?: string | number;
+  percentile2?: string | number;
 }
 
 export interface PlayerComparisonData {
