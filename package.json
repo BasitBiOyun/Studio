@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.46.0",
-    "@zumer/snapdom": "^2.24.12",
+    "@zumer/snapdom": "^2.24.15",
     "browser-image-compression": "^2.0.2",
     "dexie": "^4.4.5",
     "flag-icons": "^7.5.0",
@@ -51,10 +51,10 @@
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^5.0.4",
     "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.13",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
   }
